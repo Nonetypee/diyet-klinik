@@ -1,8 +1,9 @@
-import { Inbox, CheckCircle2, Clock4, TrendingUp, ArrowRight } from "lucide-react";
+import { Inbox, CheckCircle2, Clock4, TrendingUp, ArrowRight, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/db";
+import { auth } from "@/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +39,18 @@ async function getStats() {
 }
 
 export default async function AdminHomePage() {
-  const { pending, approvedToday, weekRequests, avgApprovalMin } = await getStats();
+  const [{ pending, approvedToday, weekRequests, avgApprovalMin }, session] =
+    await Promise.all([getStats(), auth()]);
+
+  // 2FA durumu — banner için
+  let totpEnabled = true;
+  if (session?.user?.id) {
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { totpEnabled: true },
+    });
+    totpEnabled = user?.totpEnabled ?? false;
+  }
 
   const stats = [
     {
@@ -83,6 +95,33 @@ export default async function AdminHomePage() {
             : "Onay kuyruğu boş — harika!"}
         </p>
       </div>
+
+      {/* 2FA aktif değilse banner */}
+      {!totpEnabled && (
+        <Card className="border-amber-200 bg-amber-50/50">
+          <CardContent className="flex flex-wrap items-center justify-between gap-4 p-5">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-100">
+                <ShieldAlert className="h-5 w-5 text-amber-700" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-slate-900">
+                  Hesabınızı 2FA ile koruyun
+                </h3>
+                <p className="mt-0.5 text-sm text-slate-600">
+                  İki faktörlü doğrulama, şifreniz çalınsa bile hesabınızı güvende tutar.
+                </p>
+              </div>
+            </div>
+            <Button asChild variant="primary" size="sm">
+              <Link href="/admin/security">
+                Hemen Etkinleştir
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((s) => (

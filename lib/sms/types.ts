@@ -12,13 +12,27 @@
 
 export type MessageChannel = "SMS" | "WHATSAPP";
 
+/**
+ * Template body parametresi.
+ *
+ * Meta WhatsApp Business Manager artık SADECE isimli değişkenleri
+ * kabul ediyor ({{patient_name}} gibi), pozisyonel ({{1}}) DEĞİL.
+ * Bu yüzden her parametre için `name` alanı zorunlu.
+ */
+export interface TemplateBodyParameter {
+  /** Template body'de geçen isim — örn: "patient_name" (küçük harf + alt çizgi) */
+  name: string;
+  /** Yerine geçecek değer */
+  value: string;
+}
+
 export interface TemplateMessage {
   /** WhatsApp Business Manager'da onaylı template adı */
   name: string;
   /** Template language code (örn: "tr") */
   language: string;
-  /** Body parametreleri sırayla {{1}}, {{2}}, ... yerine geçer */
-  bodyParameters: string[];
+  /** Body parametreleri — isimli ({{patient_name}}) formatında */
+  bodyParameters: TemplateBodyParameter[];
 }
 
 export interface NotificationMessage {
@@ -104,49 +118,74 @@ export const SmsTemplates = {
 /**
  * WhatsApp template tanımları — Meta Business Manager'da bu adlarla
  * onaylatılması gerekir.
+ *
+ * ÖNEMLİ — Template'ler ismli değişkenler kullanır, pozisyonel ({{1}}) DEĞİL.
+ * Burada listelenen değişken adları, Manager'daki template'le birebir
+ * aynı olmalıdır.
+ *
+ * Meta kısıtı: Bir template'te değişken sayısı/metin uzunluğu oranı
+ * dengeli olmalı. Çok değişken + kısa metin → onay reddedilir.
+ * Bu yüzden her template 3 değişkenle sınırlı tutulmuştur.
  */
 export const WhatsAppTemplates = {
   /**
-   * Template body örneği:
-   * "Sayın {{1}}, {{2}} tarihindeki {{3}} ile randevunuz onaylanmıştır.
-   *  İptal/değişiklik için: {{4}}"
+   * Manager'daki onaylı body metni:
+   *   "Sayın {{patient_name}}, beslenme danışmanlığı randevunuz Diyet
+   *    Klinik tarafından onaylanmıştır. Randevu tarihi: {{appointment_date}}.
+   *    İptal veya değişiklik için kliniğimizi {{clinic_phone}}
+   *    numarasından arayabilirsiniz. Sağlıklı günler dileriz."
+   *
+   * NOT — Meta kuralları:
+   *   1. Pozisyonel {{1}} yerine isimli değişken
+   *   2. 3 değişken (uzunluk/değişken oranı için)
+   *   3. Son değişkenden SONRA gerçek metin var ("Sağlıklı günler dileriz.")
    */
   appointmentApproved: (params: {
     patientName: string;
     dateText: string;
-    doctorName: string;
+    /** Sadece SMS fallback'inde gösterilir, WhatsApp template'inde yok */
+    doctorName?: string;
     clinicPhone: string;
   }): TemplateMessage => ({
     name: "appointment_approved",
     language: "tr",
     bodyParameters: [
-      params.patientName,
-      params.dateText,
-      params.doctorName,
-      params.clinicPhone,
+      { name: "patient_name", value: params.patientName },
+      { name: "appointment_date", value: params.dateText },
+      { name: "clinic_phone", value: params.clinicPhone },
     ],
   }),
 
   /**
-   * Template body örneği:
-   * "Sayın {{1}}, randevu talebiniz şu anda karşılanamamaktadır.
-   *  Sebep: {{2}} Önerilen alternatif: {{3}} İletişim: {{4}}"
+   * Manager'daki onaylı body metni:
+   *   "Sayın {{patient_name}}, beslenme danışmanlığı randevu talebiniz
+   *    şu anda karşılanamamaktadır. Detaylar: {{details}}. Yeniden
+   *    randevu için kliniğimizi {{clinic_phone}} numarasından
+   *    arayabilirsiniz. Anlayışınız için teşekkür ederiz."
+   *
+   * `details` alanı kodda "<sebep> Önerilen alternatif: <tarih>"
+   * şeklinde birleştirilir.
    */
   appointmentRejected: (params: {
     patientName: string;
     reason: string;
-    alternativeDateText: string;
+    alternativeDateText?: string;
     clinicPhone: string;
-  }): TemplateMessage => ({
-    name: "appointment_rejected",
-    language: "tr",
-    bodyParameters: [
-      params.patientName,
-      params.reason,
-      params.alternativeDateText || "—",
-      params.clinicPhone,
-    ],
-  }),
+  }): TemplateMessage => {
+    const details = params.alternativeDateText
+      ? `${params.reason} Önerilen alternatif: ${params.alternativeDateText}`
+      : params.reason;
+
+    return {
+      name: "appointment_rejected",
+      language: "tr",
+      bodyParameters: [
+        { name: "patient_name", value: params.patientName },
+        { name: "details", value: details },
+        { name: "clinic_phone", value: params.clinicPhone },
+      ],
+    };
+  },
 };
 
 /**

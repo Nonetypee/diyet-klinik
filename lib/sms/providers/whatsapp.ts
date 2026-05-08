@@ -58,6 +58,10 @@ export class WhatsAppProvider implements SmsProvider {
     const to = this.normalizePhone(message.to);
 
     // Template mesajı tercih edilir (24h kuralı için güvenli yol)
+    //
+    // ÖNEMLİ: Meta artık template'lerde isimli değişkenleri zorunlu kılıyor
+    // ({{patient_name}} gibi, {{1}} değil). API çağrısında her parametre
+    // için `parameter_name` alanı gönderiyoruz.
     const payload = message.template
       ? {
           messaging_product: "whatsapp",
@@ -70,9 +74,10 @@ export class WhatsAppProvider implements SmsProvider {
             components: [
               {
                 type: "body",
-                parameters: message.template.bodyParameters.map((text) => ({
+                parameters: message.template.bodyParameters.map((p) => ({
                   type: "text",
-                  text,
+                  parameter_name: p.name,
+                  text: p.value,
                 })),
               },
             ],

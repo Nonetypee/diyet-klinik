@@ -15,9 +15,10 @@ export class MockSmsProvider implements SmsProvider {
       console.log(
         `[MOCK MSG] Template: ${message.template.name} (${message.template.language})`
       );
-      console.log(
-        `[MOCK MSG] Params  : ${message.template.bodyParameters.join(" | ")}`
-      );
+      const paramsStr = message.template.bodyParameters
+        .map((p) => `{{${p.name}}}=${p.value}`)
+        .join(" | ");
+      console.log(`[MOCK MSG] Params  : ${paramsStr}`);
     }
     console.log(`[MOCK MSG] Body  : ${message.body}`);
     if (message.appointmentId) {

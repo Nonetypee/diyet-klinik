@@ -221,6 +221,14 @@ model User {
   role          String    @default("SECRETARY") // SUPER_ADMIN | DIETICIAN | SECRETARY
   isActive      Boolean   @default(true)
 
+  // TOTP / 2FA — RFC 6238
+  totpSecret      String?   // Base32-encoded shared secret (otplib)
+  totpEnabled     Boolean   @default(false)
+  totpVerifiedAt  DateTime?
+  // Tek kullanımlık yedek kodlar (JSON: [{ hash, used, usedAt }])
+  // hash bcrypt ile üretilir, kod kaybolursa giriş için kullanılır
+  backupCodes     String?
+
   lastLoginAt   DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt

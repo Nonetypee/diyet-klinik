@@ -92,12 +92,12 @@ export async function POST(
       },
     });
 
-    const altText = alternative ? formatTRDate(alternative) : "—";
+    const altText = alternative ? formatTRDate(alternative) : undefined;
 
     const fallbackText = SmsTemplates.appointmentRejected({
       patientName: appointment.patientName,
       reason: parsed.data.reason,
-      alternativeDateText: alternative ? formatTRDate(alternative) : undefined,
+      alternativeDateText: altText,
       clinicPhone: appointment.clinic.phone,
     });
 

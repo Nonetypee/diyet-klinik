@@ -33,77 +33,88 @@ interface ApprovalRequest {
 export function ApprovalQueue({ items }: { items: ApprovalRequest[] }) {
   const router = useRouter();
   const [list, setList] = useState(items);
-  const [busy, setBusy] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [reason, setReason] = useState("");
 
-  const handleApprove = async (id: string) => {
-    setBusy(id);
+  async function handleApiAction(
+    id: string,
+    action: "approve" | "reject",
+    body?: object
+  ) {
+    setBusyId(id);
     try {
-      const res = await fetch(`/api/appointments/${id}/approve`, {
+      const res = await fetch(`/api/appointments/${id}/${action}`, {
         method: "POST",
+        headers: body ? { "Content-Type": "application/json" } : undefined,
+        body: body ? JSON.stringify(body) : undefined,
       });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err?.message ?? "Onay işlemi başarısız");
+
+      if (res.status === 401) {
+        toast({
+          variant: "error",
+          title: "Oturum süresi doldu",
+          description: "Lütfen tekrar giriş yapın.",
+        });
+        router.push("/login?from=/admin/inbox");
+        return false;
       }
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        const msg =
+          data?.details ?? data?.message ?? `İşlem başarısız (HTTP ${res.status})`;
+        throw new Error(msg);
+      }
+
       setList((prev) => prev.filter((x) => x.id !== id));
+      router.refresh();
+      return true;
+    } catch (err) {
+      toast({
+        variant: "error",
+        title: action === "approve" ? "Onay verilemedi" : "Red işlemi yapılamadı",
+        description: err instanceof Error ? err.message : "Beklenmeyen hata",
+      });
+      return false;
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function onApprove(id: string) {
+    const ok = await handleApiAction(id, "approve");
+    if (ok) {
       toast({
         variant: "success",
         title: "Randevu onaylandı",
-        description: "Danışana bilgilendirme SMS'i gönderildi.",
+        description: "Danışana bilgilendirme mesajı gönderildi.",
       });
-      router.refresh();
-    } catch (e) {
-      toast({
-        variant: "error",
-        title: "Onay verilemedi",
-        description: e instanceof Error ? e.message : "Hata oluştu",
-      });
-    } finally {
-      setBusy(null);
     }
-  };
+  }
 
-  const handleReject = async (id: string) => {
-    if (!reason.trim() || reason.trim().length < 3) {
+  async function onReject(id: string) {
+    const trimmed = reason.trim();
+    if (trimmed.length < 3) {
       toast({
         variant: "error",
         title: "Red sebebi gerekli",
-        description: "Lütfen kısa bir açıklama yazınız.",
+        description: "Lütfen en az 3 karakterlik bir açıklama yazınız.",
       });
       return;
     }
-    setBusy(id);
-    try {
-      const res = await fetch(`/api/appointments/${id}/reject`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reason: reason.trim() }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err?.message ?? "Red işlemi başarısız");
-      }
-      setList((prev) => prev.filter((x) => x.id !== id));
+    const ok = await handleApiAction(id, "reject", { reason: trimmed });
+    if (ok) {
       setRejectingId(null);
       setReason("");
       toast({
         variant: "info",
         title: "Randevu reddedildi",
-        description: "Danışana alternatif önerisi SMS olarak iletildi.",
+        description: "Danışana bildirim gönderildi.",
       });
-      router.refresh();
-    } catch (e) {
-      toast({
-        variant: "error",
-        title: "İşlem yapılamadı",
-        description: e instanceof Error ? e.message : "Hata oluştu",
-      });
-    } finally {
-      setBusy(null);
     }
-  };
+  }
 
   if (list.length === 0) {
     return (
@@ -126,8 +137,8 @@ export function ApprovalQueue({ items }: { items: ApprovalRequest[] }) {
   return (
     <div className="space-y-4">
       {list.map((req) => {
-        const isRejecting = rejectingId === req.id;
-        const isBusy = busy === req.id;
+        const isRejectingThis = rejectingId === req.id;
+        const isBusyThis = busyId === req.id;
         const minutesAgo = Math.floor(
           (Date.now() - new Date(req.createdAt).getTime()) / 60000
         );
@@ -135,115 +146,132 @@ export function ApprovalQueue({ items }: { items: ApprovalRequest[] }) {
         return (
           <Card key={req.id} className="overflow-hidden">
             <CardContent className="p-0">
-              <div className="grid gap-4 p-6 sm:grid-cols-[1fr_auto] sm:items-start">
-                <div className="space-y-3">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="text-lg font-semibold text-slate-900">
-                      {req.patientName}
-                    </h3>
-                    <Badge variant="warning">Onay bekliyor</Badge>
-                    <span className="text-xs text-slate-500">
-                      {minutesAgo < 60
-                        ? `${minutesAgo} dk önce`
-                        : `${Math.floor(minutesAgo / 60)} sa önce`}
-                    </span>
-                  </div>
-
-                  <div className="grid gap-2 text-sm text-slate-700 sm:grid-cols-2">
-                    <Field icon={Phone} label="Telefon" value={req.patientPhone} />
-                    <Field
-                      icon={User}
-                      label="Hekim"
-                      value={req.doctorName ?? "Farketmez"}
-                    />
-                    <Field
-                      icon={Calendar}
-                      label="Tarih"
-                      value={formatTRDateOnly(req.requestedAt)}
-                    />
-                    <Field
-                      icon={Clock}
-                      label="Saat"
-                      value={formatTRTime(req.requestedAt)}
-                    />
-                  </div>
-
-                  <div className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-700">
-                    <span className="font-medium text-slate-900">Hizmet: </span>
-                    {req.serviceName}
-                  </div>
-
-                  {req.note && (
-                    <div className="flex items-start gap-2 rounded-lg border border-slate-100 bg-white px-3 py-2 text-sm text-slate-600">
-                      <MessageSquare className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
-                      <span>{req.note}</span>
-                    </div>
-                  )}
+              {/* ÜST: Hasta bilgileri */}
+              <div className="space-y-3 p-6">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="text-lg font-semibold text-slate-900">
+                    {req.patientName}
+                  </h3>
+                  <Badge variant="warning">Onay bekliyor</Badge>
+                  <span className="text-xs text-slate-500">
+                    {minutesAgo < 60
+                      ? `${minutesAgo} dk önce`
+                      : `${Math.floor(minutesAgo / 60)} sa önce`}
+                  </span>
                 </div>
 
-                {/* Aksiyon butonları (desktop sağ) */}
-                {!isRejecting && (
-                  <div className="flex gap-2 sm:flex-col">
-                    <Button
-                      variant="success"
-                      size="sm"
-                      className="flex-1"
-                      onClick={() => handleApprove(req.id)}
-                      disabled={isBusy}
-                    >
-                      {isBusy ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Check className="h-4 w-4" />
-                      )}
-                      Onayla
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1"
-                      onClick={() => setRejectingId(req.id)}
-                      disabled={isBusy}
-                    >
-                      <X className="h-4 w-4" />
-                      Reddet
-                    </Button>
+                <div className="grid gap-2 text-sm text-slate-700 sm:grid-cols-2">
+                  <Field icon={Phone} label="Telefon" value={req.patientPhone} />
+                  <Field
+                    icon={User}
+                    label="Diyetisyen"
+                    value={req.doctorName ?? "Otomatik atanacak"}
+                  />
+                  <Field
+                    icon={Calendar}
+                    label="Tarih"
+                    value={formatTRDateOnly(req.requestedAt)}
+                  />
+                  <Field
+                    icon={Clock}
+                    label="Saat"
+                    value={formatTRTime(req.requestedAt)}
+                  />
+                </div>
+
+                <div className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                  <span className="font-medium text-slate-900">Hizmet: </span>
+                  {req.serviceName}
+                </div>
+
+                {req.note && (
+                  <div className="flex items-start gap-2 rounded-lg border border-slate-100 bg-white px-3 py-2 text-sm text-slate-600">
+                    <MessageSquare className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
+                    <span>{req.note}</span>
                   </div>
                 )}
               </div>
 
-              {/* Red gerekçesi formu */}
-              {isRejecting && (
-                <div className="border-t border-slate-200 bg-slate-50 p-6">
-                  <label className="text-sm font-medium text-slate-900">
-                    Red sebebini hastaya bildirin
+              {/* ALT: Aksiyon butonları — HER ZAMAN GÖRÜNÜR */}
+              {!isRejectingThis ? (
+                <div
+                  className="flex gap-3 border-t border-slate-200 bg-slate-50/60 p-4"
+                  data-testid="approval-actions"
+                >
+                  <button
+                    type="button"
+                    onClick={() => onApprove(req.id)}
+                    disabled={isBusyThis}
+                    className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 active:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-emerald-300"
+                  >
+                    {isBusyThis ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        İşleniyor…
+                      </>
+                    ) : (
+                      <>
+                        <Check className="h-4 w-4" />
+                        Onayla
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRejectingId(req.id);
+                      setReason("");
+                    }}
+                    disabled={isBusyThis}
+                    className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-100 active:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <X className="h-4 w-4" />
+                    Reddet
+                  </button>
+                </div>
+              ) : (
+                /* Red gerekçesi formu */
+                <div className="border-t border-red-200 bg-red-50/60 p-4">
+                  <label
+                    htmlFor={`reason-${req.id}`}
+                    className="text-sm font-medium text-slate-900"
+                  >
+                    Red sebebini danışana bildirin
                   </label>
                   <Textarea
+                    id={`reason-${req.id}`}
                     rows={3}
-                    placeholder="Örn: Talep ettiğiniz saat dolu. 14:30 müsait, uygunsa onaylayalım."
+                    placeholder="Örn: Talep ettiğiniz saat dolu. 14:30 müsait, uygunsa onaylayabilirim."
                     className="mt-2 bg-white"
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
+                    disabled={isBusyThis}
                   />
                   <div className="mt-3 flex flex-wrap gap-2">
                     <Button
+                      type="button"
                       variant="destructive"
                       size="sm"
-                      onClick={() => handleReject(req.id)}
-                      disabled={isBusy}
+                      onClick={() => onReject(req.id)}
+                      disabled={isBusyThis || reason.trim().length < 3}
                     >
-                      {isBusy ? (
+                      {isBusyThis ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : null}
-                      Red Bildirimi Gönder
+                      ) : (
+                        <X className="h-4 w-4" />
+                      )}
+                      {isBusyThis ? "Gönderiliyor…" : "Red Bildirimi Gönder"}
                     </Button>
                     <Button
+                      type="button"
                       variant="ghost"
                       size="sm"
                       onClick={() => {
                         setRejectingId(null);
                         setReason("");
                       }}
+                      disabled={isBusyThis}
                     >
                       Vazgeç
                     </Button>

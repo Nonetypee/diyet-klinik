@@ -8,6 +8,7 @@ import {
   Settings,
   Leaf,
   ClipboardList,
+  ShieldCheck,
   type LucideIcon,
 } from "lucide-react";
 import { prisma } from "@/lib/db";
@@ -54,6 +55,7 @@ export default async function AdminLayout({
       },
       { href: "/admin/appointments", label: "Tüm Randevular", icon: ClipboardList },
       { href: "/admin/calendar", label: "Takvim", icon: CalendarDays },
+      { href: "/admin/security", label: "Güvenlik & 2FA", icon: ShieldCheck },
       { href: "/admin/settings", label: "Ayarlar", icon: Settings },
     ];
 

@@ -1,0 +1,627 @@
+"use client";
+
+import { useState } from "react";
+import {
+  Building2,
+  User,
+  Clock,
+  MessageSquareText,
+  ListChecks,
+  ShieldCheck,
+  CheckCircle2,
+  AlertCircle,
+  Save,
+  Loader2,
+} from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "@/components/ui/toaster";
+import { cn } from "@/lib/utils";
+
+interface ClinicData {
+  name: string;
+  tagline: string | null;
+  phone: string;
+  email: string;
+  whatsapp: string | null;
+  address: string;
+  city: string;
+  district: string;
+  kvkkText: string;
+  metaTitle: string | null;
+  metaDescription: string | null;
+}
+
+interface DieticianData {
+  fullName: string;
+  title: string;
+  specialty: string;
+  bio: string;
+  yearsOfExperience: number | null;
+  licenseNumber: string | null;
+}
+
+interface ServiceData {
+  slug: string;
+  name: string;
+  durationMin: number;
+  isActive: boolean;
+  category: string;
+}
+
+type TabKey = "clinic" | "dietician" | "hours" | "services" | "sms" | "kvkk";
+
+const TABS: { key: TabKey; label: string; icon: React.ElementType }[] = [
+  { key: "clinic",    label: "Klinik Bilgileri", icon: Building2 },
+  { key: "dietician", label: "Diyetisyen Profili", icon: User },
+  { key: "hours",     label: "Çalışma Saatleri", icon: Clock },
+  { key: "services",  label: "Hizmetler", icon: ListChecks },
+  { key: "sms",       label: "SMS Sağlayıcı", icon: MessageSquareText },
+  { key: "kvkk",      label: "KVKK Metni", icon: ShieldCheck },
+];
+
+const DAY_LABELS: Record<string, string> = {
+  monday: "Pazartesi",
+  tuesday: "Salı",
+  wednesday: "Çarşamba",
+  thursday: "Perşembe",
+  friday: "Cuma",
+  saturday: "Cumartesi",
+  sunday: "Pazar",
+};
+
+export function SettingsView({
+  clinic,
+  dietician,
+  services,
+  workingHours,
+  smsStatus,
+}: {
+  clinic: ClinicData | null;
+  dietician: DieticianData | null;
+  services: ServiceData[];
+  workingHours: Record<string, { open?: string; close?: string; closed?: boolean }>;
+  smsStatus: { provider: string; configured: boolean };
+}) {
+  const [activeTab, setActiveTab] = useState<TabKey>("clinic");
+  const [clinicForm, setClinicForm] = useState<ClinicData | null>(clinic);
+  const [dieticianForm, setDieticianForm] = useState<DieticianData | null>(
+    dietician
+  );
+  const [saving, setSaving] = useState(false);
+
+  const handleSaveClinic = async () => {
+    if (!clinicForm) return;
+    setSaving(true);
+    try {
+      const res = await fetch("/api/settings/clinic", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(clinicForm),
+      });
+      if (!res.ok) throw new Error("Kaydedilemedi");
+      toast({
+        variant: "success",
+        title: "Kaydedildi",
+        description: "Klinik bilgileri güncellendi.",
+      });
+    } catch (e) {
+      toast({
+        variant: "error",
+        title: "Hata",
+        description: e instanceof Error ? e.message : "Bilinmeyen hata",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveDietician = async () => {
+    if (!dieticianForm) return;
+    setSaving(true);
+    try {
+      const res = await fetch("/api/settings/dietician", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(dieticianForm),
+      });
+      if (!res.ok) throw new Error("Kaydedilemedi");
+      toast({
+        variant: "success",
+        title: "Kaydedildi",
+        description: "Diyetisyen profili güncellendi.",
+      });
+    } catch (e) {
+      toast({
+        variant: "error",
+        title: "Hata",
+        description: e instanceof Error ? e.message : "Bilinmeyen hata",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
+      {/* Tabs (sol nav) */}
+      <Card>
+        <CardContent className="p-2">
+          <nav className="flex flex-col gap-0.5">
+            {TABS.map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={cn(
+                  "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                  activeTab === tab.key
+                    ? "bg-emerald-50 text-emerald-800"
+                    : "text-slate-700 hover:bg-slate-50"
+                )}
+              >
+                <tab.icon className="h-4 w-4" />
+                {tab.label}
+              </button>
+            ))}
+          </nav>
+        </CardContent>
+      </Card>
+
+      {/* Tab content */}
+      <div>
+        {activeTab === "clinic" && clinicForm && (
+          <Card>
+            <CardContent className="space-y-5 p-6">
+              <SectionHeader
+                icon={Building2}
+                title="Klinik Bilgileri"
+                description="İletişim bilgileri ve adres."
+              />
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Klinik Adı" required>
+                  <Input
+                    value={clinicForm.name}
+                    onChange={(e) =>
+                      setClinicForm({ ...clinicForm, name: e.target.value })
+                    }
+                  />
+                </Field>
+                <Field label="Slogan">
+                  <Input
+                    value={clinicForm.tagline ?? ""}
+                    onChange={(e) =>
+                      setClinicForm({ ...clinicForm, tagline: e.target.value })
+                    }
+                  />
+                </Field>
+                <Field label="Telefon" required>
+                  <Input
+                    value={clinicForm.phone}
+                    onChange={(e) =>
+                      setClinicForm({ ...clinicForm, phone: e.target.value })
+                    }
+                  />
+                </Field>
+                <Field label="E-posta" required>
+                  <Input
+                    type="email"
+                    value={clinicForm.email}
+                    onChange={(e) =>
+                      setClinicForm({ ...clinicForm, email: e.target.value })
+                    }
+                  />
+                </Field>
+                <Field label="WhatsApp">
+                  <Input
+                    value={clinicForm.whatsapp ?? ""}
+                    onChange={(e) =>
+                      setClinicForm({
+                        ...clinicForm,
+                        whatsapp: e.target.value,
+                      })
+                    }
+                  />
+                </Field>
+                <Field label="Şehir / İlçe">
+                  <div className="flex gap-2">
+                    <Input
+                      value={clinicForm.city}
+                      onChange={(e) =>
+                        setClinicForm({ ...clinicForm, city: e.target.value })
+                      }
+                      placeholder="İstanbul"
+                    />
+                    <Input
+                      value={clinicForm.district}
+                      onChange={(e) =>
+                        setClinicForm({
+                          ...clinicForm,
+                          district: e.target.value,
+                        })
+                      }
+                      placeholder="Kadıköy"
+                    />
+                  </div>
+                </Field>
+                <div className="sm:col-span-2">
+                  <Field label="Adres">
+                    <Textarea
+                      rows={2}
+                      value={clinicForm.address}
+                      onChange={(e) =>
+                        setClinicForm({
+                          ...clinicForm,
+                          address: e.target.value,
+                        })
+                      }
+                    />
+                  </Field>
+                </div>
+                <div className="sm:col-span-2">
+                  <Field label="SEO Açıklaması">
+                    <Textarea
+                      rows={2}
+                      value={clinicForm.metaDescription ?? ""}
+                      onChange={(e) =>
+                        setClinicForm({
+                          ...clinicForm,
+                          metaDescription: e.target.value,
+                        })
+                      }
+                    />
+                  </Field>
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-2">
+                <Button variant="primary" onClick={handleSaveClinic} disabled={saving}>
+                  {saving ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
+                  Kaydet
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {activeTab === "dietician" && dieticianForm && (
+          <Card>
+            <CardContent className="space-y-5 p-6">
+              <SectionHeader
+                icon={User}
+                title="Diyetisyen Profili"
+                description="Site üzerinde 'Hakkımda' bölümünde gösterilen bilgiler."
+              />
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Ad Soyad" required>
+                  <Input
+                    value={dieticianForm.fullName}
+                    onChange={(e) =>
+                      setDieticianForm({
+                        ...dieticianForm,
+                        fullName: e.target.value,
+                      })
+                    }
+                  />
+                </Field>
+                <Field label="Ünvan" required>
+                  <Input
+                    value={dieticianForm.title}
+                    onChange={(e) =>
+                      setDieticianForm({
+                        ...dieticianForm,
+                        title: e.target.value,
+                      })
+                    }
+                    placeholder="Dyt."
+                  />
+                </Field>
+                <Field label="Uzmanlık Alanı" required>
+                  <Input
+                    value={dieticianForm.specialty}
+                    onChange={(e) =>
+                      setDieticianForm({
+                        ...dieticianForm,
+                        specialty: e.target.value,
+                      })
+                    }
+                  />
+                </Field>
+                <Field label="Lisans Numarası">
+                  <Input
+                    value={dieticianForm.licenseNumber ?? ""}
+                    onChange={(e) =>
+                      setDieticianForm({
+                        ...dieticianForm,
+                        licenseNumber: e.target.value,
+                      })
+                    }
+                  />
+                </Field>
+                <Field label="Deneyim (yıl)">
+                  <Input
+                    type="number"
+                    value={dieticianForm.yearsOfExperience ?? ""}
+                    onChange={(e) =>
+                      setDieticianForm({
+                        ...dieticianForm,
+                        yearsOfExperience: e.target.value
+                          ? parseInt(e.target.value, 10)
+                          : null,
+                      })
+                    }
+                  />
+                </Field>
+                <div className="sm:col-span-2">
+                  <Field label="Biyografi">
+                    <Textarea
+                      rows={5}
+                      value={dieticianForm.bio}
+                      onChange={(e) =>
+                        setDieticianForm({
+                          ...dieticianForm,
+                          bio: e.target.value,
+                        })
+                      }
+                    />
+                  </Field>
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-2">
+                <Button variant="primary" onClick={handleSaveDietician} disabled={saving}>
+                  {saving ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
+                  Kaydet
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {activeTab === "hours" && (
+          <Card>
+            <CardContent className="space-y-5 p-6">
+              <SectionHeader
+                icon={Clock}
+                title="Çalışma Saatleri"
+                description="Mesai saatleriniz danışanlarınıza randevu formunda gösterilir."
+              />
+              <div className="overflow-hidden rounded-lg border border-emerald-100">
+                <table className="w-full text-sm">
+                  <thead className="bg-emerald-50/50">
+                    <tr className="text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                      <th className="px-4 py-2.5">Gün</th>
+                      <th className="px-4 py-2.5">Açılış</th>
+                      <th className="px-4 py-2.5">Kapanış</th>
+                      <th className="px-4 py-2.5">Durum</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-emerald-100">
+                    {Object.entries(DAY_LABELS).map(([key, label]) => {
+                      const wh = workingHours[key] ?? { closed: true };
+                      return (
+                        <tr key={key} className="bg-white">
+                          <td className="px-4 py-2.5 font-medium text-slate-900">
+                            {label}
+                          </td>
+                          <td className="px-4 py-2.5 text-slate-700">
+                            {wh.closed ? "—" : wh.open ?? "—"}
+                          </td>
+                          <td className="px-4 py-2.5 text-slate-700">
+                            {wh.closed ? "—" : wh.close ?? "—"}
+                          </td>
+                          <td className="px-4 py-2.5">
+                            {wh.closed ? (
+                              <Badge variant="default">Kapalı</Badge>
+                            ) : (
+                              <Badge variant="success">Açık</Badge>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              <p className="text-xs text-slate-500">
+                💡 Çalışma saatleri şu anda yalnızca görüntülenir. Düzenlemek
+                için <code className="rounded bg-slate-100 px-1.5 py-0.5">prisma/seed.ts</code>{" "}
+                içindeki{" "}
+                <code className="rounded bg-slate-100 px-1.5 py-0.5">workingHours</code>{" "}
+                alanını güncelleyin.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
+        {activeTab === "services" && (
+          <Card>
+            <CardContent className="space-y-5 p-6">
+              <SectionHeader
+                icon={ListChecks}
+                title="Hizmetler"
+                description="Aktif hizmet kataloğunuz."
+              />
+              <div className="overflow-hidden rounded-lg border border-emerald-100">
+                <table className="w-full text-sm">
+                  <thead className="bg-emerald-50/50">
+                    <tr className="text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                      <th className="px-4 py-2.5">Hizmet</th>
+                      <th className="px-4 py-2.5">Slug</th>
+                      <th className="px-4 py-2.5">Kategori</th>
+                      <th className="px-4 py-2.5">Süre</th>
+                      <th className="px-4 py-2.5">Durum</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-emerald-100">
+                    {services.map((s) => (
+                      <tr key={s.slug} className="bg-white">
+                        <td className="px-4 py-2.5 font-medium text-slate-900">
+                          {s.name}
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <code className="rounded bg-slate-100 px-1.5 py-0.5 text-xs">
+                            {s.slug}
+                          </code>
+                        </td>
+                        <td className="px-4 py-2.5 text-slate-600">
+                          {s.category}
+                        </td>
+                        <td className="px-4 py-2.5 text-slate-700">
+                          {s.durationMin} dk
+                        </td>
+                        <td className="px-4 py-2.5">
+                          {s.isActive ? (
+                            <Badge variant="success">Aktif</Badge>
+                          ) : (
+                            <Badge variant="default">Pasif</Badge>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {activeTab === "sms" && (
+          <Card>
+            <CardContent className="space-y-5 p-6">
+              <SectionHeader
+                icon={MessageSquareText}
+                title="SMS Sağlayıcısı"
+                description="Onay/red bildirimleri için kullanılan SMS servisi."
+              />
+
+              <div
+                className={cn(
+                  "flex items-center gap-3 rounded-lg border p-4",
+                  smsStatus.configured
+                    ? "border-emerald-200 bg-emerald-50"
+                    : "border-amber-200 bg-amber-50"
+                )}
+              >
+                {smsStatus.configured ? (
+                  <CheckCircle2 className="h-5 w-5 text-emerald-700" />
+                ) : (
+                  <AlertCircle className="h-5 w-5 text-amber-700" />
+                )}
+                <div className="flex-1">
+                  <div className="text-sm font-semibold text-slate-900">
+                    Aktif Sağlayıcı: {smsStatus.provider}
+                  </div>
+                  <div className="text-xs text-slate-600">
+                    {smsStatus.configured
+                      ? smsStatus.provider === "MOCK"
+                        ? "Geliştirme modu — gerçek SMS gönderilmez, konsola log basılır."
+                        : "Yapılandırma tamam, SMS gönderimi aktif."
+                      : "Eksik yapılandırma — .env dosyasındaki ilgili değişkenleri doldurun."}
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-xs">
+                <div className="font-semibold text-slate-900">
+                  Sağlayıcı değiştirmek için:
+                </div>
+                <pre className="mt-2 overflow-x-auto rounded bg-white p-3 text-[11px] text-slate-700">
+{`# .env dosyası
+SMS_PROVIDER=NETGSM    # veya MUTLUCELL, MOCK
+NETGSM_USERCODE=...
+NETGSM_PASSWORD=...
+NETGSM_HEADER=BESLENME`}
+                </pre>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {activeTab === "kvkk" && clinicForm && (
+          <Card>
+            <CardContent className="space-y-5 p-6">
+              <SectionHeader
+                icon={ShieldCheck}
+                title="KVKK Aydınlatma Metni"
+                description="Form ve footer'da gösterilen 6698 sayılı kanun metniniz."
+              />
+              <Textarea
+                rows={10}
+                value={clinicForm.kvkkText}
+                onChange={(e) =>
+                  setClinicForm({ ...clinicForm, kvkkText: e.target.value })
+                }
+                className="text-sm"
+              />
+              <div className="flex justify-end">
+                <Button variant="primary" onClick={handleSaveClinic} disabled={saving}>
+                  {saving ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
+                  KVKK Metnini Kaydet
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SectionHeader({
+  icon: Icon,
+  title,
+  description,
+}: {
+  icon: React.ElementType;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="flex items-start gap-3 border-b border-slate-100 pb-4">
+      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50">
+        <Icon className="h-5 w-5 text-emerald-700" />
+      </div>
+      <div>
+        <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
+        <p className="text-sm text-slate-600">{description}</p>
+      </div>
+    </div>
+  );
+}
+
+function Field({
+  label,
+  required,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <Label className="mb-1.5 block">
+        {label} {required && <span className="text-red-500">*</span>}
+      </Label>
+      {children}
+    </div>
+  );
+}

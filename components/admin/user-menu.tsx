@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { signOut } from "next-auth/react";
-import { LogOut, ChevronUp, User } from "lucide-react";
+import { LogOut, ChevronUp, User, ShieldCheck } from "lucide-react";
 
 interface Props {
   fullName: string;
@@ -57,6 +57,16 @@ export function UserMenu({ fullName, email, initials }: Props) {
           >
             <User className="h-4 w-4 text-slate-500" />
             Profilim
+          </button>
+          <button
+            onClick={() => {
+              setOpen(false);
+              window.location.href = "/admin/security";
+            }}
+            className="flex w-full items-center gap-2.5 border-t border-emerald-100 px-3 py-2.5 text-left text-sm text-slate-700 transition-colors hover:bg-emerald-50"
+          >
+            <ShieldCheck className="h-4 w-4 text-slate-500" />
+            Güvenlik & 2FA
           </button>
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}

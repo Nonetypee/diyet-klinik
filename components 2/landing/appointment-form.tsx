@@ -72,16 +72,7 @@ export function AppointmentForm() {
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        // Validation error olursa ilk alanın hatasını göster
-        let detailedMessage =
-          err?.message ?? `Talebiniz iletilemedi (HTTP ${res.status})`;
-        if (err?.errors && typeof err.errors === "object") {
-          const firstField = Object.keys(err.errors)[0];
-          const firstError = err.errors[firstField]?.[0];
-          if (firstError) detailedMessage = `${firstField}: ${firstError}`;
-        }
-        if (err?.details) detailedMessage += ` — ${err.details}`;
-        throw new Error(detailedMessage);
+        throw new Error(err?.message ?? "Talebiniz iletilemedi");
       }
 
       setSubmitted(true);

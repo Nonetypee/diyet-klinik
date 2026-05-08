@@ -1,8 +1,6 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   Calendar,
   Clock,
@@ -15,15 +13,9 @@ import {
   CheckCheck,
   MessageSquare,
   ListFilter,
-  Check,
-  X,
-  Loader2,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { toast } from "@/components/ui/toaster";
 import { cn } from "@/lib/utils";
 import { formatTRDateOnly, formatTRTime } from "@/lib/utils";
 
@@ -120,83 +112,6 @@ const TABS: { value: string; label: string; key: keyof Props["counts"] }[] = [
 ];
 
 export function AppointmentsList({ items, currentFilter, counts }: Props) {
-  const router = useRouter();
-  const [busyId, setBusyId] = useState<string | null>(null);
-  const [rejectingId, setRejectingId] = useState<string | null>(null);
-  const [reason, setReason] = useState("");
-
-  async function handleAction(
-    id: string,
-    action: "approve" | "reject",
-    body?: object
-  ) {
-    setBusyId(id);
-    try {
-      const res = await fetch(`/api/appointments/${id}/${action}`, {
-        method: "POST",
-        headers: body ? { "Content-Type": "application/json" } : undefined,
-        body: body ? JSON.stringify(body) : undefined,
-      });
-      if (res.status === 401) {
-        toast({
-          variant: "error",
-          title: "Oturum süresi doldu",
-          description: "Lütfen tekrar giriş yapın.",
-        });
-        router.push("/login?from=/admin/appointments");
-        return false;
-      }
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        const msg =
-          data?.details ?? data?.message ?? `İşlem başarısız (HTTP ${res.status})`;
-        throw new Error(msg);
-      }
-      router.refresh();
-      return true;
-    } catch (err) {
-      toast({
-        variant: "error",
-        title: action === "approve" ? "Onay verilemedi" : "Red verilemedi",
-        description: err instanceof Error ? err.message : "Beklenmeyen hata",
-      });
-      return false;
-    } finally {
-      setBusyId(null);
-    }
-  }
-
-  async function approve(id: string) {
-    if (await handleAction(id, "approve")) {
-      toast({
-        variant: "success",
-        title: "Randevu onaylandı",
-        description: "Danışana bilgilendirme mesajı gönderildi.",
-      });
-    }
-  }
-
-  async function reject(id: string) {
-    const trimmed = reason.trim();
-    if (trimmed.length < 3) {
-      toast({
-        variant: "error",
-        title: "Red sebebi gerekli",
-        description: "En az 3 karakter girin.",
-      });
-      return;
-    }
-    if (await handleAction(id, "reject", { reason: trimmed })) {
-      setRejectingId(null);
-      setReason("");
-      toast({
-        variant: "info",
-        title: "Randevu reddedildi",
-        description: "Danışana bildirim gönderildi.",
-      });
-    }
-  }
-
   return (
     <div className="space-y-5">
       {/* Filter tabs */}
@@ -340,91 +255,6 @@ export function AppointmentsList({ items, currentFilter, counts }: Props) {
                   </div>
                 </div>
               </CardContent>
-
-              {/* PENDING ise aksiyon bandı */}
-              {item.status === "PENDING" && rejectingId !== item.id && (
-                <div className="flex gap-3 border-t border-slate-200 bg-slate-50/60 p-4">
-                  <button
-                    type="button"
-                    onClick={() => approve(item.id)}
-                    disabled={busyId === item.id}
-                    className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 active:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-emerald-300"
-                  >
-                    {busyId === item.id ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        İşleniyor…
-                      </>
-                    ) : (
-                      <>
-                        <Check className="h-4 w-4" />
-                        Onayla
-                      </>
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setRejectingId(item.id);
-                      setReason("");
-                    }}
-                    disabled={busyId === item.id}
-                    className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-100 active:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <X className="h-4 w-4" />
-                    Reddet
-                  </button>
-                </div>
-              )}
-
-              {/* Red gerekçesi formu */}
-              {item.status === "PENDING" && rejectingId === item.id && (
-                <div className="border-t border-red-200 bg-red-50/60 p-4">
-                  <label
-                    htmlFor={`reason-${item.id}`}
-                    className="text-sm font-medium text-slate-900"
-                  >
-                    Red sebebini danışana bildirin
-                  </label>
-                  <Textarea
-                    id={`reason-${item.id}`}
-                    rows={3}
-                    placeholder="Örn: Talep ettiğiniz saat dolu. 14:30 müsait, uygunsa onaylayabilirim."
-                    className="mt-2 bg-white"
-                    value={reason}
-                    onChange={(e) => setReason(e.target.value)}
-                    disabled={busyId === item.id}
-                  />
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => reject(item.id)}
-                      disabled={busyId === item.id || reason.trim().length < 3}
-                    >
-                      {busyId === item.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <X className="h-4 w-4" />
-                      )}
-                      {busyId === item.id ? "Gönderiliyor…" : "Red Bildirimi Gönder"}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setRejectingId(null);
-                        setReason("");
-                      }}
-                      disabled={busyId === item.id}
-                    >
-                      Vazgeç
-                    </Button>
-                  </div>
-                </div>
-              )}
             </Card>
           );
         })}

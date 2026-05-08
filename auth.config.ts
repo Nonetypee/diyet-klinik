@@ -6,7 +6,19 @@ import type { NextAuthConfig } from "next-auth";
  * Bu dosya middleware tarafından da kullanıldığı için
  * Edge runtime ile uyumlu olmak zorunda — Prisma ve bcrypt
  * gibi Node-only bağımlılıkları içermez. Bunlar `auth.ts`'de.
+ *
+ * Session süresi:
+ *   - Varsayılan: 4 saat (admin paneli için makul güvenlik)
+ *   - "Remember me" işaretliyse: 7 gün
+ *
+ * Bu süreler boyunca kullanıcı /admin'e doğrudan girebilir
+ * (yeni şifre/2FA istemez). Yani "kısa süre önce giriş yaptım"
+ * durumunda redirect yaşanmaması beklenen davranıştır, bug değil.
  */
+
+const FOUR_HOURS = 60 * 60 * 4;
+const SEVEN_DAYS = 60 * 60 * 24 * 7;
+
 export const authConfig = {
   pages: {
     signIn: "/login",
@@ -14,7 +26,11 @@ export const authConfig = {
   },
   session: {
     strategy: "jwt",
-    maxAge: 60 * 60 * 12, // 12 saat
+    maxAge: FOUR_HOURS,
+    updateAge: 60 * 30, // 30 dk'da bir cookie'yi yenile (kullanım varsa)
+  },
+  jwt: {
+    maxAge: FOUR_HOURS,
   },
   providers: [], // Asıl provider'lar auth.ts'de
   callbacks: {
@@ -24,6 +40,7 @@ export const authConfig = {
       const isLoginPage = nextUrl.pathname === "/login";
 
       if (isLoginPage) {
+        // Zaten giriş yapmışsa dashboard'a yönlendir
         if (isLoggedIn) {
           return Response.redirect(new URL("/admin", nextUrl));
         }
@@ -31,16 +48,26 @@ export const authConfig = {
       }
 
       if (isAdminRoute) {
-        if (!isLoggedIn) return false;
+        if (!isLoggedIn) {
+          // İstenen URL'i `from` parametresi olarak iletelim ki giriş sonrası
+          // o sayfaya dönülsün.
+          const loginUrl = new URL("/login", nextUrl);
+          loginUrl.searchParams.set("from", nextUrl.pathname + nextUrl.search);
+          return Response.redirect(loginUrl);
+        }
         return true;
       }
 
       return true;
     },
-    jwt({ token, user }) {
+    jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = (user as { id: string }).id;
         token.role = (user as { role?: string }).role ?? "SECRETARY";
+      }
+      // session.update() çağrıldığında token'ı güncelle (2FA sonrası vb.)
+      if (trigger === "update" && session) {
+        return { ...token, ...session };
       }
       return token;
     },
@@ -53,3 +80,9 @@ export const authConfig = {
     },
   },
 } satisfies NextAuthConfig;
+
+// Diğer dosyalardan referans için
+export const SESSION_DURATION = {
+  default: FOUR_HOURS,
+  rememberMe: SEVEN_DAYS,
+} as const;
