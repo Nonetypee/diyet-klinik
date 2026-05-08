@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* White + Green Natural Theme - Dietician */
+    --background: 0 0% 100%;
+    --foreground: 158 30% 12%;        /* deep evergreen ink */
+
+    --card: 0 0% 100%;
+    --card-foreground: 158 30% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 158 30% 12%;
+
+    /* Primary: emerald-700 — rich, professional green */
+    --primary: 158 64% 30%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 150 40% 97%;
+    --secondary-foreground: 158 30% 12%;
+
+    --muted: 150 25% 96%;
+    --muted-foreground: 158 15% 38%;
+
+    /* Accent: emerald-500 — fresh natural */
+    --accent: 160 84% 39%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 158 64% 35%;
+    --warning: 38 92% 50%;
+
+    --border: 150 25% 90%;
+    --input: 150 25% 90%;
+    --ring: 158 64% 30%;
+
+    --radius: 0.75rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+}
+
+@layer components {
+  /* Subtle natural mesh — soft sage and mint */
+  .bg-natural-mesh {
+    background-image:
+      radial-gradient(at 20% 0%, rgba(16, 185, 129, 0.06) 0px, transparent 50%),
+      radial-gradient(at 80% 100%, rgba(20, 184, 166, 0.05) 0px, transparent 50%);
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .animate-in-up {
+    animation: fadeInUp 0.6s ease-out forwards;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}

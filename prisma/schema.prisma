@@ -1,0 +1,227 @@
+// Diyet Klinik - Prisma Schema (SQLite)
+// Tek diyetisyenli klinik için onay tabanlı randevu yönetim sistemi
+// SQLite kullanılıyor: kurulum gerektirmez, dosya tabanlı (./prisma/dev.db)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// KLİNİK BİLGİSİ — tek satır (single-tenant)
+// ============================================================
+
+model Clinic {
+  id            String    @id @default(cuid())
+  slug          String    @unique
+  name          String
+  tagline       String?
+
+  // İletişim
+  phone         String
+  whatsapp      String?
+  email         String
+  address       String
+  city          String
+  district      String
+  mapUrl        String?
+
+  // Çalışma saatleri (JSON string)
+  workingHours  String    // JSON serialize edilmiş
+
+  // KVKK
+  kvkkText      String
+
+  // SEO
+  metaTitle     String?
+  metaDescription String?
+  keywords      String?
+
+  // İlişkiler
+  services      Service[]
+  appointments  Appointment[]
+  testimonials  Testimonial[]
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([slug])
+}
+
+// ============================================================
+// DİYETİSYEN — tek kişi
+// ============================================================
+
+model Dietician {
+  id            String    @id @default(cuid())
+  fullName      String
+  title         String    // "Dyt.", "Uzm. Dyt."
+  specialty     String    // "Klinik Beslenme & Diyetetik"
+  bio           String
+
+  yearsOfExperience Int?
+  licenseNumber String?
+  photoUrl      String?
+
+  appointments  Appointment[]
+
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// ============================================================
+// HİZMETLER
+// ============================================================
+
+model Service {
+  id            String    @id @default(cuid())
+  clinicId      String
+  clinic        Clinic    @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+
+  // SLUG — formdan gelen stabil tanımlayıcı (örn: "kilo-yonetimi")
+  slug          String    @unique
+  name          String
+  iconName      String    // Lucide icon: "Scale", "Leaf", "Salad"
+  description   String
+  durationMin   Int       @default(45)
+  priceFromTRY  Int?
+  category      String    // "WEIGHT", "SPORTS", "MEDICAL", "LIFESTYLE"
+
+  appointments  Appointment[]
+
+  isActive      Boolean   @default(true)
+  sortOrder     Int       @default(0)
+  createdAt     DateTime  @default(now())
+
+  @@index([category])
+}
+
+// ============================================================
+// RANDEVU - Onay-Öncelikli
+// ============================================================
+
+model Appointment {
+  id            String    @id @default(cuid())
+
+  clinicId      String
+  clinic        Clinic    @relation(fields: [clinicId], references: [id])
+
+  dieticianId   String?
+  dietician     Dietician? @relation(fields: [dieticianId], references: [id])
+
+  serviceId     String
+  service       Service   @relation(fields: [serviceId], references: [id])
+
+  // Hasta Bilgileri
+  patientName   String
+  patientPhone  String
+  patientEmail  String?
+  patientNote   String?
+
+  // Randevu Detayları
+  requestedAt   DateTime
+  approvedAt    DateTime?
+
+  // status: PENDING | APPROVED | REJECTED | COMPLETED | CANCELLED | NO_SHOW
+  // SQLite enum'u native desteklemediği için string olarak tutulur
+  status        String    @default("PENDING")
+
+  // Onay Süreci
+  approvedBy    String?
+  rejectionReason String?
+  alternativeSlot DateTime?
+
+  // KVKK Onayı
+  kvkkConsent   Boolean   @default(false)
+  kvkkConsentAt DateTime?
+
+  // SMS Logları
+  smsLogs       SmsLog[]
+
+  // Meta
+  source        String    @default("WEB")
+  ipAddress     String?
+  userAgent     String?
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([clinicId, status])
+  @@index([requestedAt])
+  @@index([patientPhone])
+}
+
+// Status sabit değerleri için exportable type tanımı (TS tarafında kullanılır)
+// "PENDING" | "APPROVED" | "REJECTED" | "COMPLETED" | "CANCELLED" | "NO_SHOW"
+
+// ============================================================
+// SMS İZLEME
+// ============================================================
+
+model SmsLog {
+  id            String    @id @default(cuid())
+  appointmentId String?
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id])
+
+  // "MOCK" | "NETGSM" | "MUTLUCELL" | "TWILIO"
+  provider      String
+  toPhone       String
+  message       String
+
+  // "QUEUED" | "SENT" | "DELIVERED" | "FAILED"
+  status        String    @default("QUEUED")
+
+  providerMessageId String?
+  errorMessage  String?
+  cost          Float?
+
+  sentAt        DateTime?
+  deliveredAt   DateTime?
+  createdAt     DateTime  @default(now())
+
+  @@index([appointmentId])
+  @@index([status])
+}
+
+// ============================================================
+// SOSYAL KANIT
+// ============================================================
+
+model Testimonial {
+  id            String    @id @default(cuid())
+  clinicId      String
+  clinic        Clinic    @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+
+  patientName   String
+  rating        Int
+  comment       String
+  service       String?
+  result        String?   // "8 kg kayıp - 4 ayda"
+  isVerified    Boolean   @default(false)
+  isFeatured    Boolean   @default(false)
+
+  createdAt     DateTime  @default(now())
+}
+
+// ============================================================
+// ADMIN KULLANICILARI
+// ============================================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String
+  fullName      String
+  phone         String?
+  role          String    @default("SECRETARY") // SUPER_ADMIN | DIETICIAN | SECRETARY
+  isActive      Boolean   @default(true)
+
+  lastLoginAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
