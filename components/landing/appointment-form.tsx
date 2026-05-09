@@ -1,12 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Loader2,
-  Calendar,
-  Clock,
   User,
   Phone,
   Mail,
@@ -33,15 +31,44 @@ import {
   type AppointmentRequestInput,
 } from "@/lib/validation/appointment";
 import { DIETITIAN_SERVICES } from "@/lib/services-config";
+import { DateSlotPicker } from "@/components/landing/date-slot-picker";
 
-const TIME_SLOTS = [
-  "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
-  "13:00", "13:30", "14:00", "14:30", "15:00", "15:30",
-  "16:00", "16:30", "17:00", "17:30",
-];
+interface ServiceOption {
+  slug: string;
+  name: string;
+  durationMin: number;
+}
 
-export function AppointmentForm() {
+export function AppointmentForm({ services }: { services?: ServiceOption[] }) {
+  // DB'den geldiyse onu, yoksa statik config'i kullan
+  const serviceOptions: ServiceOption[] =
+    services && services.length > 0
+      ? services
+      : DIETITIAN_SERVICES.map((s) => ({
+          slug: s.slug,
+          name: s.name,
+          durationMin: s.durationMin,
+        }));
+
   const [submitted, setSubmitted] = useState(false);
+  const [serviceSlug, setServiceSlug] = useState<string | null>(null);
+  const [pickedDate, setPickedDate] = useState<string | null>(null);
+  const [pickedTime, setPickedTime] = useState<string | null>(null);
+
+  // Başarı mesajı görünür olunca otomatik scroll için referans
+  const successRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (submitted && successRef.current) {
+      // İçerik DOM'a girdikten sonra smooth scroll
+      const el = successRef.current;
+      // Header sticky olduğu için biraz offset bırak
+      const offset = 100;
+      const top =
+        el.getBoundingClientRect().top + window.scrollY - offset;
+      window.scrollTo({ top, behavior: "smooth" });
+    }
+  }, [submitted]);
 
   const {
     register,
@@ -56,12 +83,6 @@ export function AppointmentForm() {
     },
   });
 
-  const today = new Date();
-  const minDate = today.toISOString().split("T")[0];
-  const maxDate = new Date(today.getFullYear(), today.getMonth() + 3, today.getDate())
-    .toISOString()
-    .split("T")[0];
-
   const onSubmit = async (data: AppointmentRequestInput) => {
     try {
       const res = await fetch("/api/appointments", {
@@ -72,7 +93,6 @@ export function AppointmentForm() {
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        // Validation error olursa ilk alanın hatasını göster
         let detailedMessage =
           err?.message ?? `Talebiniz iletilemedi (HTTP ${res.status})`;
         if (err?.errors && typeof err.errors === "object") {
@@ -89,9 +109,12 @@ export function AppointmentForm() {
         variant: "success",
         title: "Talebiniz alındı",
         description:
-          "Onay durumu ile ilgili SMS bilgilendirmesi yapılacaktır.",
+          "Onay durumu ile ilgili bilgilendirme yapılacaktır.",
       });
       reset();
+      setServiceSlug(null);
+      setPickedDate(null);
+      setPickedTime(null);
     } catch (e) {
       toast({
         variant: "error",
@@ -104,7 +127,10 @@ export function AppointmentForm() {
 
   if (submitted) {
     return (
-      <div className="mx-auto max-w-2xl rounded-3xl border border-emerald-200 bg-emerald-50 p-10 text-center">
+      <div
+        ref={successRef}
+        className="mx-auto max-w-2xl scroll-mt-24 rounded-3xl border border-emerald-200 bg-emerald-50 p-10 text-center"
+      >
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100">
           <CheckCircle2 className="h-7 w-7 text-emerald-700" />
         </div>
@@ -113,7 +139,7 @@ export function AppointmentForm() {
         </h3>
         <p className="mt-2 text-slate-600">
           En kısa sürede randevunuz değerlendirilecektir.
-          Onaylandığında cep telefonunuza SMS ile bildirim gelecektir.
+          Onaylandığında cep telefonunuza bildirim gelecektir.
         </p>
         <Button
           variant="outline"
@@ -129,26 +155,30 @@ export function AppointmentForm() {
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="mx-auto max-w-3xl rounded-3xl border border-slate-200 bg-white p-8 shadow-xl shadow-emerald-100/30 sm:p-10"
+      className="mx-auto max-w-3xl rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-emerald-100/30 sm:p-10"
     >
-      <div className="grid gap-5 sm:grid-cols-2">
-        {/* Hizmet */}
-        <div className="sm:col-span-2">
+      <div className="space-y-6">
+        {/* 1. Hizmet seçimi */}
+        <div>
           <Label htmlFor="serviceSlug">
             Danışmanlık Türü <span className="text-red-500">*</span>
           </Label>
           <Select
-            onValueChange={(v) =>
-              setValue("serviceSlug", v, { shouldValidate: true })
-            }
+            onValueChange={(v) => {
+              setServiceSlug(v);
+              setValue("serviceSlug", v, { shouldValidate: true });
+              // Hizmet değişince saat seçimini sıfırla (süre değişebilir)
+              setPickedTime(null);
+              setValue("requestedTime", "" as never, { shouldValidate: false });
+            }}
           >
             <SelectTrigger className="mt-1.5">
               <SelectValue placeholder="Hangi konuda görüşmek istersiniz?" />
             </SelectTrigger>
             <SelectContent>
-              {DIETITIAN_SERVICES.map((s) => (
+              {serviceOptions.map((s) => (
                 <SelectItem key={s.slug} value={s.slug}>
-                  {s.name}
+                  {s.name} ({s.durationMin} dk)
                 </SelectItem>
               ))}
             </SelectContent>
@@ -158,130 +188,112 @@ export function AppointmentForm() {
           )}
         </div>
 
-        {/* Hasta Adı */}
+        {/* 2. Tarih + saat picker */}
         <div>
-          <Label htmlFor="patientName">
-            Ad Soyad <span className="text-red-500">*</span>
+          <Label>
+            Tarih ve Saat <span className="text-red-500">*</span>
           </Label>
-          <div className="relative mt-1.5">
-            <User className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-            <Input
-              id="patientName"
-              className="pl-9"
-              placeholder="Adınız Soyadınız"
-              {...register("patientName")}
+          <div className="mt-1.5">
+            <DateSlotPicker
+              serviceSlug={serviceSlug}
+              selectedDate={pickedDate}
+              selectedTime={pickedTime}
+              onChange={(date, time) => {
+                setPickedDate(date);
+                setPickedTime(time);
+                if (date) {
+                  setValue("requestedDate", date, { shouldValidate: true });
+                }
+                if (time) {
+                  setValue("requestedTime", time, { shouldValidate: true });
+                } else {
+                  setValue("requestedTime", "" as never, {
+                    shouldValidate: false,
+                  });
+                }
+              }}
             />
           </div>
-          {errors.patientName && (
-            <FieldError>{errors.patientName.message}</FieldError>
+          {(errors.requestedDate || errors.requestedTime) && (
+            <FieldError>
+              {errors.requestedDate?.message ?? errors.requestedTime?.message}
+            </FieldError>
           )}
         </div>
 
-        {/* Telefon */}
+        {/* 3. Hasta bilgileri */}
+        <div className="grid gap-5 sm:grid-cols-2">
+          <div>
+            <Label htmlFor="patientName">
+              Ad Soyad <span className="text-red-500">*</span>
+            </Label>
+            <div className="relative mt-1.5">
+              <User className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+              <Input
+                id="patientName"
+                className="pl-9"
+                placeholder="Adınız Soyadınız"
+                {...register("patientName")}
+              />
+            </div>
+            {errors.patientName && (
+              <FieldError>{errors.patientName.message}</FieldError>
+            )}
+          </div>
+
+          <div>
+            <Label htmlFor="patientPhone">
+              Cep Telefonu <span className="text-red-500">*</span>
+            </Label>
+            <div className="relative mt-1.5">
+              <Phone className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+              <Input
+                id="patientPhone"
+                type="tel"
+                className="pl-9"
+                placeholder="0 5xx xxx xx xx"
+                {...register("patientPhone")}
+              />
+            </div>
+            {errors.patientPhone && (
+              <FieldError>{errors.patientPhone.message}</FieldError>
+            )}
+          </div>
+
+          <div className="sm:col-span-2">
+            <Label htmlFor="patientEmail">E-posta (opsiyonel)</Label>
+            <div className="relative mt-1.5">
+              <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+              <Input
+                id="patientEmail"
+                type="email"
+                className="pl-9"
+                placeholder="ornek@eposta.com"
+                {...register("patientEmail")}
+              />
+            </div>
+            {errors.patientEmail && (
+              <FieldError>{errors.patientEmail.message}</FieldError>
+            )}
+          </div>
+
+          <div className="sm:col-span-2">
+            <Label htmlFor="patientNote">Notunuz (opsiyonel)</Label>
+            <div className="relative mt-1.5">
+              <FileText className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+              <Textarea
+                id="patientNote"
+                rows={3}
+                className="pl-9"
+                placeholder="Hedefiniz, mevcut durumunuz veya bilmemizi istediğiniz detaylar"
+                {...register("patientNote")}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* 4. KVKK */}
         <div>
-          <Label htmlFor="patientPhone">
-            Cep Telefonu <span className="text-red-500">*</span>
-          </Label>
-          <div className="relative mt-1.5">
-            <Phone className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-            <Input
-              id="patientPhone"
-              type="tel"
-              className="pl-9"
-              placeholder="0 5xx xxx xx xx"
-              {...register("patientPhone")}
-            />
-          </div>
-          {errors.patientPhone && (
-            <FieldError>{errors.patientPhone.message}</FieldError>
-          )}
-        </div>
-
-        {/* E-posta */}
-        <div className="sm:col-span-2">
-          <Label htmlFor="patientEmail">E-posta (opsiyonel)</Label>
-          <div className="relative mt-1.5">
-            <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-            <Input
-              id="patientEmail"
-              type="email"
-              className="pl-9"
-              placeholder="ornek@eposta.com"
-              {...register("patientEmail")}
-            />
-          </div>
-          {errors.patientEmail && (
-            <FieldError>{errors.patientEmail.message}</FieldError>
-          )}
-        </div>
-
-        {/* Tarih */}
-        <div>
-          <Label htmlFor="requestedDate">
-            Tercih Edilen Tarih <span className="text-red-500">*</span>
-          </Label>
-          <div className="relative mt-1.5">
-            <Calendar className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-slate-400" />
-            <Input
-              id="requestedDate"
-              type="date"
-              min={minDate}
-              max={maxDate}
-              className="pl-9"
-              {...register("requestedDate")}
-            />
-          </div>
-          {errors.requestedDate && (
-            <FieldError>{errors.requestedDate.message}</FieldError>
-          )}
-        </div>
-
-        {/* Saat */}
-        <div>
-          <Label htmlFor="requestedTime">
-            Tercih Edilen Saat <span className="text-red-500">*</span>
-          </Label>
-          <div className="relative mt-1.5">
-            <Clock className="pointer-events-none absolute left-3 top-3 z-10 h-4 w-4 text-slate-400" />
-            <Select
-              onValueChange={(v) =>
-                setValue("requestedTime", v, { shouldValidate: true })
-              }
-            >
-              <SelectTrigger className="pl-9">
-                <SelectValue placeholder="Saat seçiniz" />
-              </SelectTrigger>
-              <SelectContent>
-                {TIME_SLOTS.map((t) => (
-                  <SelectItem key={t} value={t}>
-                    {t}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          {errors.requestedTime && (
-            <FieldError>{errors.requestedTime.message}</FieldError>
-          )}
-        </div>
-
-        {/* Not */}
-        <div className="sm:col-span-2">
-          <Label htmlFor="patientNote">Notunuz (opsiyonel)</Label>
-          <div className="relative mt-1.5">
-            <FileText className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-            <Textarea
-              id="patientNote"
-              rows={3}
-              className="pl-9"
-              placeholder="Hedefiniz, mevcut durumunuz veya bilmemizi istediğiniz detaylar"
-              {...register("patientNote")}
-            />
-          </div>
-        </div>
-
-        {/* KVKK Onayı */}
-        <div className="sm:col-span-2">
           <div className="flex items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4">
             <Checkbox
               id="kvkkConsent"
@@ -333,7 +345,7 @@ export function AppointmentForm() {
 
       <p className="mt-4 text-center text-xs text-slate-500">
         Talebinizi göndererek, sizinle iletişime geçilmesini kabul etmiş
-        olursunuz. Onay sonrası SMS ile bilgilendirileceksiniz.
+        olursunuz. Onay sonrası bilgilendirileceksiniz.
       </p>
     </form>
   );

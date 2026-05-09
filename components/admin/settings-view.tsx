@@ -21,6 +21,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/toaster";
 import { cn } from "@/lib/utils";
+import { WorkingHoursEditor } from "@/components/admin/working-hours-editor";
 
 interface ClinicData {
   name: string;
@@ -404,52 +405,9 @@ export function SettingsView({
               <SectionHeader
                 icon={Clock}
                 title="Çalışma Saatleri"
-                description="Mesai saatleriniz danışanlarınıza randevu formunda gösterilir."
+                description="Saatleri değiştirdiğinizde randevu formunda dolu/kapalı saatler otomatik güncellenir."
               />
-              <div className="overflow-hidden rounded-lg border border-emerald-100">
-                <table className="w-full text-sm">
-                  <thead className="bg-emerald-50/50">
-                    <tr className="text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
-                      <th className="px-4 py-2.5">Gün</th>
-                      <th className="px-4 py-2.5">Açılış</th>
-                      <th className="px-4 py-2.5">Kapanış</th>
-                      <th className="px-4 py-2.5">Durum</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-emerald-100">
-                    {Object.entries(DAY_LABELS).map(([key, label]) => {
-                      const wh = workingHours[key] ?? { closed: true };
-                      return (
-                        <tr key={key} className="bg-white">
-                          <td className="px-4 py-2.5 font-medium text-slate-900">
-                            {label}
-                          </td>
-                          <td className="px-4 py-2.5 text-slate-700">
-                            {wh.closed ? "—" : wh.open ?? "—"}
-                          </td>
-                          <td className="px-4 py-2.5 text-slate-700">
-                            {wh.closed ? "—" : wh.close ?? "—"}
-                          </td>
-                          <td className="px-4 py-2.5">
-                            {wh.closed ? (
-                              <Badge variant="default">Kapalı</Badge>
-                            ) : (
-                              <Badge variant="success">Açık</Badge>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-              <p className="text-xs text-slate-500">
-                💡 Çalışma saatleri şu anda yalnızca görüntülenir. Düzenlemek
-                için <code className="rounded bg-slate-100 px-1.5 py-0.5">prisma/seed.ts</code>{" "}
-                içindeki{" "}
-                <code className="rounded bg-slate-100 px-1.5 py-0.5">workingHours</code>{" "}
-                alanını güncelleyin.
-              </p>
+              <WorkingHoursEditor initialHours={workingHours} />
             </CardContent>
           </Card>
         )}

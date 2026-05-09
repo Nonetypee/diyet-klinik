@@ -1,4 +1,4 @@
-import { Inbox, CheckCircle2, Clock4, TrendingUp, ArrowRight, ShieldAlert } from "lucide-react";
+import { Inbox, CheckCircle2, Clock4, TrendingUp, ArrowRight, ShieldAlert, Globe, Star, Clock } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -193,6 +193,73 @@ export default async function AdminHomePage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Site Kontrolü kartı */}
+      <Card>
+        <CardContent className="p-6">
+          <div className="mb-4 flex items-start gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50">
+              <Globe className="h-5 w-5 text-emerald-700" />
+            </div>
+            <div>
+              <h3 className="text-base font-semibold text-slate-900">
+                Site Kontrolü
+              </h3>
+              <p className="mt-1 text-sm text-slate-600">
+                Tek sayfa sitenizin içeriğini ve müsaitlik ayarlarınızı buradan
+                yönetin.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-3">
+            <Link
+              href="/admin/settings"
+              className="flex items-center gap-3 rounded-lg border border-slate-200 p-3 text-sm transition-colors hover:border-emerald-200 hover:bg-emerald-50/40"
+            >
+              <Clock className="h-4 w-4 text-emerald-700" />
+              <div>
+                <div className="font-medium text-slate-900">
+                  Çalışma Saatleri
+                </div>
+                <div className="text-xs text-slate-500">
+                  Açılış / kapanış saatleri
+                </div>
+              </div>
+            </Link>
+
+            <Link
+              href="/admin/testimonials"
+              className="flex items-center gap-3 rounded-lg border border-slate-200 p-3 text-sm transition-colors hover:border-emerald-200 hover:bg-emerald-50/40"
+            >
+              <Star className="h-4 w-4 text-emerald-700" />
+              <div>
+                <div className="font-medium text-slate-900">
+                  Danışan Yorumları
+                </div>
+                <div className="text-xs text-slate-500">
+                  Landing'de gösterilen yorumlar
+                </div>
+              </div>
+            </Link>
+
+            <Link
+              href="/admin/settings"
+              className="flex items-center gap-3 rounded-lg border border-slate-200 p-3 text-sm transition-colors hover:border-emerald-200 hover:bg-emerald-50/40"
+            >
+              <Globe className="h-4 w-4 text-emerald-700" />
+              <div>
+                <div className="font-medium text-slate-900">
+                  Klinik Bilgileri
+                </div>
+                <div className="text-xs text-slate-500">
+                  İletişim, adres, KVKK
+                </div>
+              </div>
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

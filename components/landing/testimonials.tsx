@@ -3,14 +3,23 @@
 import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, Quote, Star, TrendingDown } from "lucide-react";
 
-const TESTIMONIALS = [
+interface TestimonialItem {
+  name: string;
+  service: string | null;
+  result: string | null;
+  rating: number;
+  comment: string;
+}
+
+// DB henüz boşsa veya admin hiç "öne çıkan" işaretlememişse bu fallback gösterilir
+const FALLBACK_TESTIMONIALS: TestimonialItem[] = [
   {
     name: "Aslı M.",
     service: "Kilo Yönetimi",
     result: "12 kg kayıp - 5 ayda",
     rating: 5,
     comment:
-      "Selin Hanım'ın programı sayesinde sadece kilo vermekle kalmadım, beslenme alışkanlıklarım kalıcı olarak değişti. En önemlisi yo-yo etkisi yaşamadım. Hâlâ ideal kilomdayım.",
+      "Selin Hanım'ın programı sayesinde sadece kilo vermekle kalmadım, beslenme alışkanlıklarım kalıcı olarak değişti. En önemlisi yo-yo etkisi yaşamadım.",
   },
   {
     name: "Kerem T.",
@@ -18,35 +27,17 @@ const TESTIMONIALS = [
     result: "8 kg kas kazanımı",
     rating: 5,
     comment:
-      "Antrenmanlarım için doğru makro hesabını öğrendim. Performansım belirgin şekilde arttı, toparlanma sürem kısaldı. Sporcu beslenmesi konusunda gerçek uzman.",
-  },
-  {
-    name: "Zeynep K.",
-    service: "İnsülin Direnci",
-    result: "HOMA-IR 4.2 → 1.8",
-    rating: 5,
-    comment:
-      "İnsülin direncim için aldığım danışmanlık değerlerimi normal aralığa getirdi. Üstelik enerjim de geri geldi, hayatımdaki en iyi yatırımlardan biri.",
-  },
-  {
-    name: "Mehmet O.",
-    service: "Online Danışmanlık",
-    result: "Sürdürülebilir alışkanlık",
-    rating: 5,
-    comment:
-      "Yurt dışında çalıştığım için online danışmanlık çok pratik oldu. Her hafta WhatsApp'tan check-in yapıyoruz. Programa uyum sağlamak hiç zor değil.",
-  },
-  {
-    name: "Ayşe G.",
-    service: "Hamilelik Beslenmesi",
-    result: "Sağlıklı gebelik",
-    rating: 5,
-    comment:
-      "Hamileliğim boyunca hangi besini ne kadar tüketmem gerektiğini öğrendim. Hem ben hem bebeğim sağlıklı. Dyt. Selin'e çok teşekkür ederim.",
+      "Antrenmanlarım için doğru makro hesabını öğrendim. Performansım belirgin şekilde arttı, toparlanma sürem kısaldı.",
   },
 ];
 
-export function Testimonials() {
+export function Testimonials({
+  items,
+}: {
+  items?: TestimonialItem[];
+}) {
+  const TESTIMONIALS =
+    items && items.length > 0 ? items : FALLBACK_TESTIMONIALS;
   const [index, setIndex] = useState(0);
 
   useEffect(() => {

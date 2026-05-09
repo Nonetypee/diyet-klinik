@@ -7,10 +7,22 @@ import {
   Leaf,
   Video,
   Sprout,
+  Stethoscope,
+  Salad,
+  Sparkles,
   ArrowUpRight,
 } from "lucide-react";
 import Link from "next/link";
 import { DIETITIAN_SERVICES } from "@/lib/services-config";
+
+interface ServiceItem {
+  slug: string;
+  name: string;
+  iconName: string;
+  description: string;
+  /** İsteğe bağlı kısa kazanım listesi (statik config'ten gelir, DB'de yok) */
+  shortBenefits?: string[];
+}
 
 // Lucide ismi → import edilen icon eşleşmesi
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string; strokeWidth?: number }>> = {
@@ -22,9 +34,31 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string; strokeW
   Leaf,
   Video,
   Sprout,
+  Stethoscope,
+  Salad,
+  Sparkles,
 };
 
-export function Services() {
+/**
+ * DB'den gelen hizmetleri statik config'teki ek alanlarla (shortBenefits)
+ * birleştirir. Aynı slug varsa DB galip gelir.
+ */
+function mergeServices(items?: ServiceItem[]): ServiceItem[] {
+  if (!items || items.length === 0) {
+    return DIETITIAN_SERVICES;
+  }
+  return items.map((s) => {
+    const fallback = DIETITIAN_SERVICES.find((d) => d.slug === s.slug);
+    return {
+      ...s,
+      shortBenefits: s.shortBenefits ?? fallback?.shortBenefits,
+    };
+  });
+}
+
+export function Services({ items }: { items?: ServiceItem[] }) {
+  const services = mergeServices(items);
+
   return (
     <section id="hizmetler" className="bg-white py-24">
       <div className="mx-auto max-w-7xl px-6">
@@ -51,7 +85,7 @@ export function Services() {
         </div>
 
         <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {DIETITIAN_SERVICES.map((s) => {
+          {services.map((s) => {
             const Icon = ICON_MAP[s.iconName] ?? Leaf;
             return (
               <div
@@ -67,16 +101,18 @@ export function Services() {
                 <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-slate-600">
                   {s.description}
                 </p>
-                <div className="mt-4 flex flex-wrap gap-1.5">
-                  {s.shortBenefits.map((b) => (
-                    <span
-                      key={b}
-                      className="inline-flex rounded-md bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-600"
-                    >
-                      {b}
-                    </span>
-                  ))}
-                </div>
+                {s.shortBenefits && s.shortBenefits.length > 0 && (
+                  <div className="mt-4 flex flex-wrap gap-1.5">
+                    {s.shortBenefits.map((b) => (
+                      <span
+                        key={b}
+                        className="inline-flex rounded-md bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-600"
+                      >
+                        {b}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             );
           })}

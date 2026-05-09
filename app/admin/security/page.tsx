@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { parseBackupCodes, unusedBackupCount } from "@/lib/totp";
 import { SecuritySettings } from "@/components/admin/security-settings";
+import { BackupPanel } from "@/components/admin/backup-panel";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Güvenlik & 2FA" };
@@ -55,6 +56,9 @@ export default async function SecurityPage() {
           totalBackupCodes: records.length,
         }}
       />
+
+      {/* Veri Yedekleme & Geri Yükleme */}
+      <BackupPanel />
     </div>
   );
 }
