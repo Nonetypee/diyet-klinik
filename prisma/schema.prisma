@@ -212,6 +212,46 @@ model Testimonial {
 // ADMIN KULLANICILARI
 // ============================================================
 
+// ============================================================
+// MESAJLAŞMA YAPILANDIRMASI
+// Admin panelinden düzenlenebilen WhatsApp / SMS sağlayıcı ayarları.
+// Hassas alanlar (token, şifre) AES-256-GCM ile şifrelenmiş olarak
+// "...Enc" sufix'iyle saklanır.
+// ============================================================
+
+model MessagingConfig {
+  id String @id @default("singleton") // Sadece 1 satır
+
+  // Birincil sağlayıcı: MOCK | WHATSAPP | NETGSM | MUTLUCELL
+  primaryProvider  String  @default("MOCK")
+  // Yedek (opsiyonel): birincil başarısız olursa
+  fallbackProvider String?
+
+  // WhatsApp Cloud API
+  whatsappPhoneNumberId  String?
+  whatsappAccessTokenEnc String?
+  whatsappApiVersion     String? @default("v22.0")
+
+  // Netgsm
+  netgsmUserCode    String?
+  netgsmPasswordEnc String?
+  netgsmHeader      String?
+
+  // Mutlucell
+  mutlucellUsername    String?
+  mutlucellPasswordEnc String?
+  mutlucellOrgn        String?
+
+  // Son test mesajının sonucu (UI'da göster)
+  lastTestAt        DateTime?
+  lastTestStatus    String?  // OK | FAILED
+  lastTestChannel   String?
+  lastTestError     String?
+
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+}
+
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
