@@ -19,6 +19,27 @@ import type { NextAuthConfig } from "next-auth";
 const FOUR_HOURS = 60 * 60 * 4;
 const SEVEN_DAYS = 60 * 60 * 24 * 7;
 
+/**
+ * NEXTAUTH_URL/AUTH_URL localhost iken Auth.js isteği rewrite eder; nextUrl.origin
+ * o zaman yanlış olur. Redirect'ler gerçek ziyaretçi host'unu proxy header'larından alır.
+ */
+function publicOriginFromRequest(request: Request): string {
+  const host =
+    request.headers.get("x-forwarded-host") ?? request.headers.get("host");
+  if (!host) {
+    return new URL(request.url).origin;
+  }
+  let proto = request.headers.get("x-forwarded-proto");
+  if (!proto) {
+    proto =
+      host.startsWith("localhost") || host.startsWith("127.0.0.1")
+        ? "http"
+        : "https";
+  }
+  proto = proto.replace(/:$/, "");
+  return `${proto}://${host}`;
+}
+
 export const authConfig = {
   /**
    * AWS Amplify / reverse proxy arkasında üretimde zorunlu.
@@ -40,7 +61,9 @@ export const authConfig = {
   },
   providers: [], // Asıl provider'lar auth.ts'de
   callbacks: {
-    authorized({ auth, request: { nextUrl } }) {
+    authorized({ auth, request }) {
+      const nextUrl = request.nextUrl;
+      const origin = publicOriginFromRequest(request);
       const isLoggedIn = !!auth?.user;
       const isAdminRoute = nextUrl.pathname.startsWith("/admin");
       const isLoginPage = nextUrl.pathname === "/login";
@@ -48,7 +71,7 @@ export const authConfig = {
       if (isLoginPage) {
         // Zaten giriş yapmışsa dashboard'a yönlendir
         if (isLoggedIn) {
-          return Response.redirect(new URL("/admin", nextUrl));
+          return Response.redirect(new URL("/admin", origin));
         }
         return true;
       }
@@ -57,7 +80,7 @@ export const authConfig = {
         if (!isLoggedIn) {
           // İstenen URL'i `from` parametresi olarak iletelim ki giriş sonrası
           // o sayfaya dönülsün.
-          const loginUrl = new URL("/login", nextUrl);
+          const loginUrl = new URL("/login", origin);
           loginUrl.searchParams.set("from", nextUrl.pathname + nextUrl.search);
           return Response.redirect(loginUrl);
         }
