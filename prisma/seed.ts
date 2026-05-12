@@ -250,7 +250,7 @@ async function main() {
         isActive: true,
       },
     });
-    console.log("   Admin oluşturuldu:", adminEmail, "/ şifre:", adminPassword);
+    console.log("   Admin oluşturuldu:", adminEmail);
   } else {
     console.log("   Admin zaten mevcut:", adminEmail);
   }
@@ -259,9 +259,8 @@ async function main() {
   console.log("   Klinik:", clinic.slug);
   console.log("   Hizmet sayısı:", DIETITIAN_SERVICES.length);
   console.log("");
-  console.log("🔐 Giriş için: /login");
-  console.log("   E-posta : ", adminEmail);
-  console.log("   Şifre   : ", adminPassword);
+  console.log("🔐 Giriş için: /login — e-posta:", adminEmail);
+  console.log("   (Şifre: ortamda ADMIN_PASSWORD veya varsayılan geliştirme değeri.)");
   console.log("");
 }
 

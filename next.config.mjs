@@ -7,6 +7,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const nextConfig = {
   reactStrictMode: true,
   outputFileTracingRoot: path.join(__dirname),
+  /** SQLite dosyası ve şema sunucu paketine dahil edilsin (serverless/hosted deploy). */
+  outputFileTracingIncludes: {
+    "/api/**/*": ["./prisma/**/*"],
+    "/admin/**/*": ["./prisma/**/*"],
+    "/login": ["./prisma/**/*"],
+  },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "**" },

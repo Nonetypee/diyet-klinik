@@ -20,6 +20,12 @@ const FOUR_HOURS = 60 * 60 * 4;
 const SEVEN_DAYS = 60 * 60 * 24 * 7;
 
 export const authConfig = {
+  /**
+   * AWS Amplify / reverse proxy arkasında üretimde zorunlu.
+   * AUTH_URL veya VERCEL tanımlı değilse Auth.js varsayılanı trustHost=false olur ve
+   * "UntrustedHost" ile oturum / credentials akışı kırılır.
+   */
+  trustHost: true,
   pages: {
     signIn: "/login",
     error: "/login",

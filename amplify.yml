@@ -8,6 +8,11 @@ frontend:
         - npm ci
     build:
       commands:
+        # Varsayılan SQLite (Amplify konsolda DATABASE_URL tanımlıysa ezilir).
+        - export DATABASE_URL="${DATABASE_URL:-file:./prisma/amplify.db}"
+        # Şema + ilk deploy için tablolar ve seed (admin kullanıcı ADMIN_EMAIL / ADMIN_PASSWORD ile).
+        - npx prisma db push --skip-generate
+        - npm run db:seed
         - npm run build
   artifacts:
     baseDirectory: .next
