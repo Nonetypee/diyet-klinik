@@ -23,6 +23,7 @@ import { toast } from "@/components/ui/toaster";
 import { cn } from "@/lib/utils";
 import { WorkingHoursEditor } from "@/components/admin/working-hours-editor";
 import { MessagingConfigEditor } from "@/components/admin/messaging-config-editor";
+import { MessagingConfigEditor } from "@/components/admin/messaging-config-editor";
 
 interface ClinicData {
   name: string;
@@ -76,25 +77,16 @@ const DAY_LABELS: Record<string, string> = {
   sunday: "Pazar",
 };
 
-interface MessagingStatus {
-  primary: string;
-  primaryConfigured: boolean;
-  fallback: string | null;
-  fallbackConfigured: boolean;
-}
-
 export function SettingsView({
   clinic,
   dietician,
   services,
   workingHours,
-  messagingStatus,
 }: {
   clinic: ClinicData | null;
   dietician: DieticianData | null;
   services: ServiceData[];
   workingHours: Record<string, { open?: string; close?: string; closed?: boolean }>;
-  messagingStatus: MessagingStatus;
 }) {
   const [activeTab, setActiveTab] = useState<TabKey>("clinic");
   const [clinicForm, setClinicForm] = useState<ClinicData | null>(clinic);

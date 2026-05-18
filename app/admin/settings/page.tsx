@@ -14,44 +14,6 @@ export default async function SettingsPage() {
     }),
   ]);
 
-  // Mesajlaşma sağlayıcı durumu (WhatsApp ya da SMS)
-  const messagingProvider = (
-    process.env.MESSAGING_PROVIDER ??
-    process.env.SMS_PROVIDER ??
-    "MOCK"
-  ).toUpperCase();
-
-  const fallbackProvider = (
-    process.env.MESSAGING_FALLBACK_PROVIDER ?? ""
-  ).toUpperCase();
-
-  const isProviderConfigured = (p: string) => {
-    if (p === "MOCK") return true;
-    if (p === "WHATSAPP")
-      return (
-        !!process.env.WHATSAPP_PHONE_NUMBER_ID &&
-        !!process.env.WHATSAPP_ACCESS_TOKEN
-      );
-    if (p === "NETGSM")
-      return (
-        !!process.env.NETGSM_USERCODE &&
-        !!process.env.NETGSM_PASSWORD &&
-        !!process.env.NETGSM_HEADER
-      );
-    if (p === "MUTLUCELL")
-      return (
-        !!process.env.MUTLUCELL_USERNAME &&
-        !!process.env.MUTLUCELL_PASSWORD &&
-        !!process.env.MUTLUCELL_ORGN
-      );
-    return false;
-  };
-
-  const messagingConfigured = isProviderConfigured(messagingProvider);
-  const fallbackConfigured = fallbackProvider
-    ? isProviderConfigured(fallbackProvider)
-    : false;
-
   // Çalışma saatleri parse
   let workingHours: Record<string, { open?: string; close?: string; closed?: boolean }> = {};
   if (clinic?.workingHours) {
@@ -69,8 +31,8 @@ export default async function SettingsPage() {
           Ayarlar
         </h1>
         <p className="mt-1 text-slate-600">
-          Klinik bilgileriniz, çalışma saatleriniz, SMS sağlayıcısı ve KVKK
-          metni.
+          Klinik bilgileriniz, çalışma saatleriniz, mesajlaşma sağlayıcısı ve
+          KVKK metni. Tüm değişiklikler anında uygulanır.
         </p>
       </div>
 
@@ -112,12 +74,6 @@ export default async function SettingsPage() {
           category: s.category,
         }))}
         workingHours={workingHours}
-        messagingStatus={{
-          primary: messagingProvider,
-          primaryConfigured: messagingConfigured,
-          fallback: fallbackProvider || null,
-          fallbackConfigured,
-        }}
       />
     </div>
   );

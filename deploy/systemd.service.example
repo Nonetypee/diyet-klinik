@@ -1,0 +1,57 @@
+################################################################
+# Systemd Service — Diyet Klinik (PM2'ye alternatif)
+#
+# PM2 yerine doğrudan systemd kullanmak isterseniz:
+#   1. Bu dosyayı /etc/systemd/system/diyet-klinik.service kopyala
+#   2. KULLANICI ve YOL bölümlerini düzenle
+#   3. systemctl komutları:
+#        sudo systemctl daemon-reload
+#        sudo systemctl enable diyet-klinik
+#        sudo systemctl start diyet-klinik
+#        sudo systemctl status diyet-klinik
+#        sudo journalctl -u diyet-klinik -f      # log takip
+################################################################
+
+[Unit]
+Description=Diyet Klinik (Next.js)
+Documentation=https://github.com/your-org/diyet-klinik
+After=network.target
+
+[Service]
+Type=simple
+User=diyetadmin
+Group=diyetadmin
+WorkingDirectory=/var/www/diyet-klinik
+
+# Production environment
+Environment=NODE_ENV=production
+Environment=PORT=3000
+# .env dosyasını da yükle (zaten Next.js otomatik yükler ama defansif)
+EnvironmentFile=/var/www/diyet-klinik/.env
+
+# Next.js'i 127.0.0.1'e bind et — Nginx üzerinden gelir
+ExecStart=/usr/bin/node node_modules/next/dist/bin/next start -p 3000 -H 127.0.0.1
+
+# Çökerse 5 saniye sonra yeniden başlat
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=diyet-klinik
+
+# Güvenlik sertleştirmesi
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/var/www/diyet-klinik/prisma /var/www/diyet-klinik/logs /var/www/diyet-klinik/.next
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+
+# Limitler
+LimitNOFILE=65535
+MemoryLimit=1G
+
+[Install]
+WantedBy=multi-user.target
