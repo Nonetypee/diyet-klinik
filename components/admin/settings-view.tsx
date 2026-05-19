@@ -179,7 +179,7 @@ export function SettingsView({
               <SectionHeader
                 icon={Building2}
                 title="Klinik Bilgileri"
-                description="İletişim bilgileri ve adres."
+                description="İletişim bilgileri ve adres — ana sayfa navbar, footer ve iletişim bölümünde görünür."
               />
 
               <div className="grid gap-4 sm:grid-cols-2">
@@ -263,6 +263,20 @@ export function SettingsView({
                   </Field>
                 </div>
                 <div className="sm:col-span-2">
+                  <Field label="SEO Başlığı (tarayıcı sekmesi)">
+                    <Input
+                      value={clinicForm.metaTitle ?? ""}
+                      onChange={(e) =>
+                        setClinicForm({
+                          ...clinicForm,
+                          metaTitle: e.target.value,
+                        })
+                      }
+                      placeholder="Dyt. Selin Akar — Beslenme & Diyet"
+                    />
+                  </Field>
+                </div>
+                <div className="sm:col-span-2">
                   <Field label="SEO Açıklaması">
                     <Textarea
                       rows={2}
@@ -273,6 +287,7 @@ export function SettingsView({
                           metaDescription: e.target.value,
                         })
                       }
+                      placeholder="Google sonuçlarında görünecek kısa açıklama"
                     />
                   </Field>
                 </div>
@@ -298,7 +313,7 @@ export function SettingsView({
               <SectionHeader
                 icon={User}
                 title="Diyetisyen Profili"
-                description="Site üzerinde 'Hakkımda' bölümünde gösterilen bilgiler."
+                description="Ana sayfa Hero, Hakkımda ve Footer bölümlerinde gösterilen bilgiler."
               />
 
               <div className="grid gap-4 sm:grid-cols-2">

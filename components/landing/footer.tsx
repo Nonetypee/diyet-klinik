@@ -1,9 +1,26 @@
 import Link from "next/link";
 import type { Route } from "next";
-import { Leaf, MapPin, Phone, Mail, Clock, Instagram } from "lucide-react";
+import { Leaf, MapPin, Phone, Mail, Clock, MessageCircle } from "lucide-react";
 import { DIETITIAN_SERVICES } from "@/lib/services-config";
+import type { LandingClinic, LandingDietician } from "@/lib/landing-data";
+import {
+  phoneToTelHref,
+  summarizeWorkingHours,
+} from "@/lib/landing-data";
 
-export function Footer() {
+interface Props {
+  clinic: LandingClinic;
+  dietician: LandingDietician;
+}
+
+export function Footer({ clinic, dietician }: Props) {
+  const brandTitle = `${dietician.title} ${dietician.fullName}`.trim();
+  const fullAddress = [clinic.address, clinic.district, clinic.city]
+    .filter(Boolean)
+    .join(", ");
+  const hoursLabel = summarizeWorkingHours(clinic.workingHours);
+  const tagline = clinic.tagline ?? "Beslenme & Diyet";
+
   return (
     <footer className="border-t border-slate-200 bg-white">
       <div className="mx-auto max-w-7xl px-6 py-16">
@@ -16,10 +33,10 @@ export function Footer() {
               </div>
               <div className="leading-tight">
                 <div className="text-base font-semibold tracking-tight text-slate-900">
-                  Dyt. Selin Akar
+                  {brandTitle}
                 </div>
                 <div className="text-[11px] font-medium tracking-wide text-emerald-700">
-                  Beslenme & Diyet
+                  {tagline}
                 </div>
               </div>
             </Link>
@@ -29,34 +46,46 @@ export function Footer() {
             </p>
 
             <div className="mt-6 space-y-3 text-sm text-slate-600">
-              <div className="flex items-start gap-2.5">
-                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
-                <span>Bağdat Caddesi No: 123, Daire 4, Kadıköy / İstanbul</span>
-              </div>
+              {fullAddress && (
+                <div className="flex items-start gap-2.5">
+                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                  <span>{fullAddress}</span>
+                </div>
+              )}
               <div className="flex items-center gap-2.5">
                 <Phone className="h-4 w-4 shrink-0 text-emerald-600" />
-                <a href="tel:+902121234567" className="hover:text-slate-900">
-                  0212 123 45 67
+                <a
+                  href={`tel:${phoneToTelHref(clinic.phone)}`}
+                  className="hover:text-slate-900"
+                >
+                  {clinic.phone}
                 </a>
               </div>
+              {clinic.whatsapp && (
+                <div className="flex items-center gap-2.5">
+                  <MessageCircle className="h-4 w-4 shrink-0 text-emerald-600" />
+                  <a
+                    href={`https://wa.me/${phoneToTelHref(clinic.whatsapp).replace(/^\+/, "")}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-slate-900"
+                  >
+                    {clinic.whatsapp} (WhatsApp)
+                  </a>
+                </div>
+              )}
               <div className="flex items-center gap-2.5">
                 <Mail className="h-4 w-4 shrink-0 text-emerald-600" />
                 <a
-                  href="mailto:info@selinakarbeslenme.com"
+                  href={`mailto:${clinic.email}`}
                   className="hover:text-slate-900"
                 >
-                  info@selinakarbeslenme.com
+                  {clinic.email}
                 </a>
               </div>
               <div className="flex items-center gap-2.5">
                 <Clock className="h-4 w-4 shrink-0 text-emerald-600" />
-                <span>Pzt-Cmt 09:00 - 19:00</span>
-              </div>
-              <div className="flex items-center gap-2.5">
-                <Instagram className="h-4 w-4 shrink-0 text-emerald-600" />
-                <a href="#" className="hover:text-slate-900">
-                  @dyt.selinakar
-                </a>
+                <span>{hoursLabel}</span>
               </div>
             </div>
           </div>
@@ -140,9 +169,14 @@ export function Footer() {
 
         <div className="mt-12 flex flex-col items-start justify-between gap-4 border-t border-slate-200 pt-8 text-xs text-slate-500 sm:flex-row sm:items-center">
           <div>
-            © {new Date().getFullYear()} Dyt. Selin Akar. Tüm hakları saklıdır.
-            <span className="mx-2 text-slate-300">·</span>
-            T.C. Sağlık Bakanlığı Diyetisyen Lisans No: DYT-12345
+            © {new Date().getFullYear()} {brandTitle}. Tüm hakları saklıdır.
+            {dietician.licenseNumber && (
+              <>
+                <span className="mx-2 text-slate-300">·</span>
+                T.C. Sağlık Bakanlığı Diyetisyen Lisans No:{" "}
+                {dietician.licenseNumber}
+              </>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <span>Bu site KVKK uyumludur.</span>

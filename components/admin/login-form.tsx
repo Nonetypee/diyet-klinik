@@ -55,9 +55,13 @@ export function LoginForm({ callbackUrl, initialError }: Props) {
   const [usingBackup, setUsingBackup] = useState(false);
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(
-    initialError ? "Giriş bilgileri hatalı, lütfen tekrar deneyin." : null
-  );
+  const [error, setError] = useState<string | null>(() => {
+    if (!initialError) return null;
+    if (initialError === "session_expired") {
+      return "Oturum geçersiz (veritabanı yenilendi olabilir). Lütfen tekrar giriş yapın.";
+    }
+    return "Giriş bilgileri hatalı, lütfen tekrar deneyin.";
+  });
 
   async function attemptSignIn(extra: { totpCode?: string }) {
     return signIn("credentials", {

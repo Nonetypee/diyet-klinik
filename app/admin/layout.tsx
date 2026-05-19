@@ -15,7 +15,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { prisma } from "@/lib/db";
-import { auth } from "@/auth";
+import { auth, signOut } from "@/auth";
 import { NotificationsBell } from "@/components/admin/notifications-bell";
 import { UserMenu } from "@/components/admin/user-menu";
 import { SessionProvider } from "@/components/providers/session-provider";
@@ -39,8 +39,19 @@ export default async function AdminLayout({
 }) {
   // Auth — middleware zaten /admin'i koruyor ama defansif olalım
   const session = await auth();
-  if (!session?.user) {
+  if (!session?.user?.id) {
     redirect("/login?from=/admin");
+  }
+
+  const dbUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { id: true },
+  });
+  if (!dbUser) {
+    await signOut({
+      redirectTo: "/login?from=/admin&error=session_expired",
+    });
+    redirect("/login?from=/admin&error=session_expired");
   }
 
   const pendingCount = await prisma.appointment.count({

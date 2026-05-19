@@ -6,6 +6,7 @@ import {
   MessageCircle,
   ShieldCheck,
 } from "lucide-react";
+import type { LandingDietician } from "@/lib/landing-data";
 
 const PILLARS = [
   {
@@ -46,7 +47,14 @@ const PILLARS = [
   },
 ];
 
-export function TrustBuilder() {
+interface Props {
+  dietician: LandingDietician;
+}
+
+export function TrustBuilder({ dietician }: Props) {
+  const experienceLabel = dietician.yearsOfExperience
+    ? `${dietician.yearsOfExperience} yıl`
+    : "Klinik";
   return (
     <section
       id="neden-biz"
@@ -90,7 +98,7 @@ export function TrustBuilder() {
         <div className="mt-16 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-emerald-100 bg-emerald-100 lg:grid-cols-4">
           {[
             ["1.500+", "Memnun danışan"],
-            ["9 yıl", "Klinik deneyim"],
+            [experienceLabel, "Klinik deneyim"],
             ["%92", "Hedef başarısı"],
             ["7/24", "Randevu talebi"],
           ].map(([n, l]) => (

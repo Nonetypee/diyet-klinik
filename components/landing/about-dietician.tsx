@@ -1,33 +1,56 @@
 import { GraduationCap, Award, BookOpen, Users } from "lucide-react";
+import type { LandingDietician } from "@/lib/landing-data";
 
-const HIGHLIGHTS = [
-  {
-    icon: GraduationCap,
-    title: "Eğitim",
-    description:
-      "Hacettepe Üniversitesi Beslenme ve Diyetetik Bölümü mezunu. Klinik beslenme yüksek lisansı.",
-  },
-  {
-    icon: Award,
-    title: "Sertifikalar",
-    description:
-      "Sporcu Beslenmesi, İnsülin Direnci & Diyabet, Obezite ve Mikrobiyota uzmanlık programları.",
-  },
-  {
-    icon: BookOpen,
-    title: "Yayınlar",
-    description:
-      "Türkiye Diyetisyenler Derneği (TDD) üyesi. Bilimsel makaleler ve halka açık seminerler.",
-  },
-  {
-    icon: Users,
-    title: "Deneyim",
-    description:
-      "9 yıllık klinik tecrübe boyunca 1.500'ün üzerinde danışana eşlik ettim.",
-  },
-];
+interface Props {
+  dietician: LandingDietician;
+}
 
-export function AboutDietician() {
+export function AboutDietician({ dietician }: Props) {
+  const fullName = `${dietician.title} ${dietician.fullName}`.trim();
+  const initials = dietician.fullName
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((p) => p[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
+  const experienceText = dietician.yearsOfExperience
+    ? `${dietician.yearsOfExperience} yıllık klinik tecrübe.`
+    : "Klinik beslenme alanında deneyim.";
+
+  const HIGHLIGHTS = [
+    {
+      icon: GraduationCap,
+      title: "Uzmanlık",
+      description: dietician.specialty,
+    },
+    {
+      icon: Award,
+      title: "Lisans No",
+      description: dietician.licenseNumber
+        ? `T.C. Sağlık Bakanlığı: ${dietician.licenseNumber}`
+        : "Lisans bilgisi ayarlardan eklenebilir.",
+    },
+    {
+      icon: BookOpen,
+      title: "Yaklaşım",
+      description:
+        "Kanıta dayalı klinik beslenme protokolleri, kişiye özel takip.",
+    },
+    {
+      icon: Users,
+      title: "Deneyim",
+      description: experienceText,
+    },
+  ];
+
+  // Bio'yu paragraflara ayır
+  const bioParagraphs = dietician.bio
+    .split(/\n{2,}|(?:\r?\n)+/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+
   return (
     <section
       id="hakkimda"
@@ -41,23 +64,13 @@ export function AboutDietician() {
               <div className="aspect-[4/5] overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-100 via-emerald-50 to-white">
                 <div className="flex h-full w-full flex-col items-center justify-center p-10 text-center">
                   <div className="flex h-32 w-32 items-center justify-center rounded-full bg-white text-4xl font-semibold tracking-tight text-emerald-800 shadow-sm ring-4 ring-emerald-100/60">
-                    SA
+                    {initials || "—"}
                   </div>
                   <div className="mt-6 text-2xl font-semibold tracking-tight text-slate-900">
-                    Dyt. Selin Akar
+                    {fullName}
                   </div>
                   <div className="mt-1 text-sm font-medium text-emerald-800">
-                    Klinik Beslenme & Diyetetik Uzmanı
-                  </div>
-                  <div className="mt-6 flex flex-wrap justify-center gap-2">
-                    {["Kilo Yönetimi", "Sporcu Beslenmesi", "Mikrobiyota"].map((t) => (
-                      <span
-                        key={t}
-                        className="inline-flex items-center gap-1 rounded-full bg-white/80 px-3 py-1 text-xs font-medium text-emerald-800 ring-1 ring-emerald-100"
-                      >
-                        {t}
-                      </span>
-                    ))}
+                    {dietician.specialty}
                   </div>
                 </div>
               </div>
@@ -70,23 +83,14 @@ export function AboutDietician() {
               Hakkımda
             </span>
             <h2 className="mt-5 text-balance text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">
-              Merhaba, ben Dyt. Selin Akar.
+              Merhaba, ben {fullName}.
             </h2>
             <div className="mt-5 space-y-4 text-lg leading-relaxed text-slate-600">
-              <p>
-                9 yıldır klinik beslenme alanında çalışıyorum. Yo-yo
-                diyetlerinin kimseye fayda sağlamadığına, sürdürülebilir
-                değişimin ise herkes için mümkün olduğuna inanıyorum.
-              </p>
-              <p>
-                Her danışanım için bilimsel literatürü, kişisel hedefleri ve
-                yaşam tarzını birlikte değerlendirerek bir plan
-                hazırlıyorum. Sürecin sonunda kilo verdiğinizden çok,{" "}
-                <strong className="font-semibold text-slate-900">
-                  beslenmeyi yeniden öğrendiğinizi
-                </strong>{" "}
-                hissetmenizi istiyorum.
-              </p>
+              {bioParagraphs.length > 0 ? (
+                bioParagraphs.map((p, i) => <p key={i}>{p}</p>)
+              ) : (
+                <p>{dietician.bio}</p>
+              )}
             </div>
 
             <div className="mt-10 grid gap-5 sm:grid-cols-2">

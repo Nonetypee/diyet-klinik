@@ -1,8 +1,19 @@
 import Link from "next/link";
 import { ArrowRight, Phone, Leaf } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import type { LandingClinic } from "@/lib/landing-data";
+import {
+  phoneToTelHref,
+  summarizeWorkingHours,
+} from "@/lib/landing-data";
 
-export function Cta() {
+interface Props {
+  clinic: LandingClinic;
+}
+
+export function Cta({ clinic }: Props) {
+  const hoursLabel = summarizeWorkingHours(clinic.workingHours);
+
   return (
     <section className="bg-white py-24">
       <div className="mx-auto max-w-7xl px-6">
@@ -43,16 +54,15 @@ export function Cta() {
                 variant="outline"
                 className="h-12 border-emerald-700/40 bg-transparent px-7 text-base text-white hover:bg-emerald-800/40"
               >
-                <a href="tel:+902121234567">
+                <a href={`tel:${phoneToTelHref(clinic.phone)}`}>
                   <Phone className="mr-1.5 h-4 w-4" />
-                  0212 123 45 67
+                  {clinic.phone}
                 </a>
               </Button>
             </div>
 
             <p className="mt-8 text-sm text-emerald-200/80">
-              Pazartesi - Cumartesi · 09:00 - 19:00 · Telefon talepleriniz mesai
-              içinde değerlendirilir
+              {hoursLabel} · Telefon talepleriniz mesai içinde değerlendirilir
             </p>
           </div>
         </div>

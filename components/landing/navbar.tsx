@@ -6,6 +6,8 @@ import { useState } from "react";
 import { Menu, Phone, X, Leaf } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import type { LandingClinic, LandingDietician } from "@/lib/landing-data";
+import { phoneToTelHref } from "@/lib/landing-data";
 
 const NAV_ITEMS: { href: Route; label: string }[] = [
   { href: "#hizmetler" as Route, label: "Hizmetler" },
@@ -15,8 +17,16 @@ const NAV_ITEMS: { href: Route; label: string }[] = [
   { href: "#sss" as Route, label: "S.S.S." },
 ];
 
-export function Navbar() {
+interface Props {
+  clinic: LandingClinic;
+  dietician: LandingDietician;
+}
+
+export function Navbar({ clinic, dietician }: Props) {
   const [open, setOpen] = useState(false);
+
+  const brandTitle = `${dietician.title} ${dietician.fullName}`.trim();
+  const brandSubtitle = clinic.tagline ?? "Beslenme & Diyet";
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-100 bg-white/85 backdrop-blur-md">
@@ -27,10 +37,10 @@ export function Navbar() {
           </div>
           <div className="leading-tight">
             <div className="text-base font-semibold tracking-tight text-slate-900">
-              Dyt. Selin Akar
+              {brandTitle}
             </div>
             <div className="text-[11px] font-medium tracking-wide text-emerald-700">
-              Beslenme & Diyet
+              {brandSubtitle}
             </div>
           </div>
         </Link>
@@ -49,11 +59,11 @@ export function Navbar() {
 
         <div className="hidden items-center gap-3 md:flex">
           <a
-            href="tel:+902121234567"
+            href={`tel:${phoneToTelHref(clinic.phone)}`}
             className="flex items-center gap-1.5 text-sm font-medium text-slate-700"
           >
             <Phone className="h-4 w-4" />
-            0212 123 45 67
+            {clinic.phone}
           </a>
           <Button asChild size="sm" variant="primary">
             <Link href={"#randevu" as Route}>Randevu Al</Link>

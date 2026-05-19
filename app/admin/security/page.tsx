@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { auth, signOut } from "@/auth";
 import { prisma } from "@/lib/db";
 import { parseBackupCodes, unusedBackupCount } from "@/lib/totp";
 import { SecuritySettings } from "@/components/admin/security-settings";
@@ -27,8 +27,13 @@ export default async function SecurityPage() {
     },
   });
 
+  // DB yeniden seed/push sonrası JWT'deki user id artık yoksa middleware
+  // /login → /admin döngüsü oluşur; oturumu kapatıp tekrar giriş iste.
   if (!user) {
-    redirect("/login");
+    await signOut({
+      redirectTo: "/login?from=/admin/security&error=session_expired",
+    });
+    redirect("/login?from=/admin/security&error=session_expired");
   }
 
   const records = parseBackupCodes(user.backupCodes);

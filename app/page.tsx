@@ -10,10 +10,43 @@ import { Cta } from "@/components/landing/cta";
 import { Footer } from "@/components/landing/footer";
 import { AppointmentForm } from "@/components/landing/appointment-form";
 import { prisma } from "@/lib/db";
+import { getLandingData } from "@/lib/landing-data.server";
+import type { Metadata } from "next";
 
 // Her istekte güncel yorumları çek (admin yeni yorum ekleyince anında yansısın)
 export const dynamic = "force-dynamic";
 export const revalidate = 60; // 60 sn cache fallback
+
+export async function generateMetadata(): Promise<Metadata> {
+  const slug = process.env.DEFAULT_CLINIC_SLUG ?? "diyet-klinik";
+  try {
+    const clinic = await prisma.clinic.findUnique({
+      where: { slug },
+      select: { name: true, metaTitle: true, metaDescription: true, tagline: true },
+    });
+    if (!clinic) return {};
+    const title =
+      clinic.metaTitle ??
+      (clinic.tagline
+        ? `${clinic.name} — ${clinic.tagline}`
+        : clinic.name);
+    const description =
+      clinic.metaDescription ??
+      clinic.tagline ??
+      undefined;
+    return {
+      title,
+      description,
+      openGraph: {
+        title,
+        description,
+        siteName: clinic.name,
+      },
+    };
+  } catch {
+    return {};
+  }
+}
 
 async function getFeaturedTestimonials() {
   try {
@@ -49,12 +82,12 @@ async function getActiveServices() {
 }
 
 export default async function HomePage() {
-  const [testimonials, services] = await Promise.all([
+  const [testimonials, services, { clinic, dietician }] = await Promise.all([
     getFeaturedTestimonials(),
     getActiveServices(),
+    getLandingData(),
   ]);
 
-  // Services bileşeni için hafif tip
   const servicesForLanding = services.map((s) => ({
     slug: s.slug,
     name: s.name,
@@ -62,7 +95,6 @@ export default async function HomePage() {
     description: s.description,
   }));
 
-  // Form için sadece slug + name + duration
   const servicesForForm = services.map((s) => ({
     slug: s.slug,
     name: s.name,
@@ -71,12 +103,12 @@ export default async function HomePage() {
 
   return (
     <main className="min-h-screen bg-white">
-      <Navbar />
-      <Hero />
-      <TrustBuilder />
+      <Navbar clinic={clinic} dietician={dietician} />
+      <Hero clinic={clinic} dietician={dietician} />
+      <TrustBuilder dietician={dietician} />
       <Services items={servicesForLanding} />
-      <AboutDietician />
-      <HowItWorks />
+      <AboutDietician dietician={dietician} />
+      <HowItWorks clinic={clinic} />
       <section
         id="randevu"
         className="border-y border-slate-100 bg-emerald-50/30 py-24"
@@ -99,8 +131,8 @@ export default async function HomePage() {
       </section>
       <Testimonials items={testimonials} />
       <Faq />
-      <Cta />
-      <Footer />
+      <Cta clinic={clinic} />
+      <Footer clinic={clinic} dietician={dietician} />
     </main>
   );
 }

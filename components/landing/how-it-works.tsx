@@ -1,6 +1,16 @@
 import { FileText, ShieldCheck, MessageSquareText, CalendarCheck } from "lucide-react";
+import type { LandingClinic } from "@/lib/landing-data";
 
-const STEPS = [
+interface Props {
+  clinic: LandingClinic;
+}
+
+function buildSteps(clinic: LandingClinic) {
+  const locationLabel = clinic.district
+    ? `${clinic.district}'deki klinikte`
+    : "klinikte";
+
+  return [
   {
     number: "01",
     icon: FileText,
@@ -26,12 +36,13 @@ const STEPS = [
     number: "04",
     icon: CalendarCheck,
     title: "Görüşmeye Katılın",
-    description:
-      "Online video bağlantısıyla ya da Kadıköy'deki klinikte yüz yüze görüşmeye başlayalım.",
+    description: `Online video bağlantısıyla ya da ${locationLabel} yüz yüze görüşmeye başlayalım.`,
   },
-];
+  ];
+}
 
-export function HowItWorks() {
+export function HowItWorks({ clinic }: Props) {
+  const STEPS = buildSteps(clinic);
   return (
     <section
       id="nasil-calisir"

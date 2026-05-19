@@ -8,8 +8,23 @@ import {
   Leaf,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import type { LandingClinic, LandingDietician } from "@/lib/landing-data";
 
-export function Hero() {
+interface Props {
+  clinic: LandingClinic;
+  dietician: LandingDietician;
+}
+
+export function Hero({ clinic, dietician }: Props) {
+  const tagline =
+    clinic.tagline ?? "Bilime dayalı, kişiye özel beslenme";
+
+  const experienceBadge = dietician.yearsOfExperience
+    ? `${dietician.yearsOfExperience}+ yıl klinik deneyim`
+    : "Klinik deneyim";
+
+  const fullDietName = `${dietician.title} ${dietician.fullName}`.trim();
+
   return (
     <section className="relative overflow-hidden bg-natural-mesh">
       {/* Doğal yumuşak gölgeler */}
@@ -21,7 +36,7 @@ export function Hero() {
         <div className="lg:col-span-7">
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-100 bg-white/80 px-3 py-1.5 text-xs font-medium text-emerald-800 shadow-sm">
             <Leaf className="h-3.5 w-3.5 text-emerald-600" />
-            Bilime dayalı, kişiye özel beslenme
+            {tagline}
           </div>
 
           <h1 className="text-balance text-5xl font-semibold tracking-tight text-slate-900 sm:text-6xl lg:text-[68px] lg:leading-[1.05]">
@@ -60,11 +75,11 @@ export function Hero() {
             </div>
             <div className="flex items-center gap-2">
               <Sprout className="h-5 w-5 text-emerald-600" />
-              <span>9+ yıl klinik deneyim</span>
+              <span>{experienceBadge}</span>
             </div>
             <div className="flex items-center gap-2">
               <BadgeCheck className="h-5 w-5 text-emerald-600" />
-              <span>Hacettepe BES & Diyetetik</span>
+              <span>{dietician.specialty}</span>
             </div>
           </div>
         </div>
@@ -88,9 +103,16 @@ export function Hero() {
               </div>
 
               <div className="mt-6 space-y-3 border-t border-emerald-100/70 pt-5">
-                <Row label="Diyetisyen" value="Dyt. Selin Akar" />
+                <Row label="Diyetisyen" value={fullDietName} />
                 <Row label="Görüşme" value="Kilo Yönetimi (60 dk)" />
-                <Row label="Tür" value="Yüz Yüze · Kadıköy" />
+                <Row
+                  label="Tür"
+                  value={
+                    clinic.district
+                      ? `Yüz Yüze · ${clinic.district}`
+                      : "Yüz Yüze"
+                  }
+                />
                 <Row label="Durum" value="Onaylandı" highlight />
               </div>
 
@@ -99,7 +121,7 @@ export function Hero() {
                 <div className="mt-1 text-slate-300">
                   Sayın Danışan, randevunuz{" "}
                   <span className="text-emerald-400">onaylanmıştır</span>.
-                  14.05.2026 14:30. Bilgi: 0212 123 45 67
+                  14.05.2026 14:30. Bilgi: {clinic.phone}
                 </div>
               </div>
 
