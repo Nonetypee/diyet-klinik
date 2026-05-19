@@ -18,7 +18,38 @@ import path from "node:path";
  */
 
 const BACKUP_DIR = path.join(process.cwd(), "prisma", "backups");
-const DB_PATH = path.join(process.cwd(), "prisma", "dev.db");
+
+/**
+ * Prisma'nın kullandığı SQLite dosya yolunu DATABASE_URL'den çözümler.
+ * (Sabit prisma/dev.db yalnızca geliştirmede doğru olur; üretimde mutlak yol kullanılır.)
+ */
+function resolveSqliteDatabasePath(): string {
+  const url = process.env.DATABASE_URL?.trim();
+  if (!url) {
+    return path.join(process.cwd(), "prisma", "dev.db");
+  }
+  if (!url.startsWith("file:")) {
+    throw new Error(
+      "Yedekleme yalnızca SQLite ile çalışır (DATABASE_URL file:... olmalı)."
+    );
+  }
+
+  let filePath = url.slice("file:".length);
+  if (filePath.startsWith("//")) {
+    filePath = filePath.slice(2);
+  }
+
+  if (path.isAbsolute(filePath)) {
+    return filePath;
+  }
+
+  const relative = filePath.replace(/^\.\//, "");
+  return path.join(process.cwd(), "prisma", relative);
+}
+
+function getDbPath(): string {
+  return resolveSqliteDatabasePath();
+}
 const BACKUP_PREFIX = "backup-";
 const PRE_RESTORE_PREFIX = "pre-restore-";
 const MAX_BACKUPS_TO_KEEP = 30; // Son 30 günü tut
@@ -62,9 +93,11 @@ export async function createBackup(
 ): Promise<BackupInfo> {
   await ensureBackupDir();
 
-  if (!existsSync(DB_PATH)) {
+  const dbPath = getDbPath();
+
+  if (!existsSync(dbPath)) {
     throw new Error(
-      `DB dosyası bulunamadı: ${DB_PATH}. Önce npx prisma db push çalıştırın.`
+      `DB dosyası bulunamadı: ${dbPath}. .env içindeki DATABASE_URL ve npx prisma db push çıktısını kontrol edin.`
     );
   }
 
@@ -73,7 +106,7 @@ export async function createBackup(
   const filename = `${prefix}${timestampForFilename()}.db`;
   const filepath = path.join(BACKUP_DIR, filename);
 
-  await fs.copyFile(DB_PATH, filepath);
+  await fs.copyFile(dbPath, filepath);
 
   const stat = await fs.stat(filepath);
   return {
@@ -132,15 +165,17 @@ export async function restoreBackup(filename: string): Promise<{
     throw new Error(`Yedek bulunamadı: ${filename}`);
   }
 
+  const dbPath = getDbPath();
+
   // 1. Mevcut DB'yi pre-restore olarak yedekle (geri-dönüş yolu)
   let preRestoreSnapshot = "";
-  if (existsSync(DB_PATH)) {
+  if (existsSync(dbPath)) {
     const snap = await createBackup({ prefix: "pre-restore" });
     preRestoreSnapshot = snap.filename;
   }
 
   // 2. Yedeği ana DB konumuna kopyala
-  await fs.copyFile(sourcePath, DB_PATH);
+  await fs.copyFile(sourcePath, dbPath);
 
   return {
     restoredFrom: filename,

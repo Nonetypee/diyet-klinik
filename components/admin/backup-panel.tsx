@@ -103,7 +103,11 @@ export function BackupPanel() {
     try {
       const res = await fetch("/api/backup", { method: "POST" });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.message ?? "Oluşturulamadı");
+      if (!res.ok) {
+        throw new Error(
+          data?.details ?? data?.message ?? "Oluşturulamadı"
+        );
+      }
       toast({
         variant: "success",
         title: "Yedek oluşturuldu",

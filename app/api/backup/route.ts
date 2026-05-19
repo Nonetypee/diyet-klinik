@@ -41,13 +41,11 @@ export async function POST() {
     return NextResponse.json({ success: true, backup: info }, { status: 201 });
   } catch (err) {
     console.error("[POST /api/backup]", err);
+    const detail = err instanceof Error ? err.message : undefined;
     return NextResponse.json(
       {
-        message: "Yedek oluşturulamadı",
-        details:
-          process.env.NODE_ENV === "development" && err instanceof Error
-            ? err.message
-            : undefined,
+        message: detail ?? "Yedek oluşturulamadı",
+        details: detail,
       },
       { status: 500 }
     );

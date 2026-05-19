@@ -23,7 +23,6 @@ import { toast } from "@/components/ui/toaster";
 import { cn } from "@/lib/utils";
 import { WorkingHoursEditor } from "@/components/admin/working-hours-editor";
 import { MessagingConfigEditor } from "@/components/admin/messaging-config-editor";
-import { MessagingConfigEditor } from "@/components/admin/messaging-config-editor";
 
 interface ClinicData {
   name: string;
