@@ -37,7 +37,7 @@ class InvalidCredentialsError extends CredentialsSignin {
 }
 
 const credentialsSchema = z.object({
-  email: z.string().email(),
+  username: z.string().min(2),
   password: z.string().min(6),
   // 6 haneli TOTP veya yedek kod (XXXX-XXXX)
   totpCode: z.string().optional(),
@@ -48,7 +48,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     Credentials({
       credentials: {
-        email: { label: "E-posta", type: "email" },
+        username: { label: "Kullanıcı Adı", type: "text" },
         password: { label: "Şifre", type: "password" },
         totpCode: { label: "Doğrulama Kodu", type: "text" },
       },
@@ -56,10 +56,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const parsed = credentialsSchema.safeParse(rawCredentials);
         if (!parsed.success) throw new InvalidCredentialsError();
 
-        const { email, password, totpCode } = parsed.data;
+        const { username, password, totpCode } = parsed.data;
 
         const user = await prisma.user.findUnique({
-          where: { email: email.toLowerCase() },
+          where: { username: username.trim().toLowerCase() },
         });
 
         if (!user || !user.isActive) throw new InvalidCredentialsError();
@@ -103,7 +103,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         return {
           id: user.id,
-          email: user.email,
+          email: user.email ?? undefined,
           name: user.fullName,
           role: user.role,
         };

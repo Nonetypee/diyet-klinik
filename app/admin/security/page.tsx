@@ -18,6 +18,7 @@ export default async function SecurityPage() {
     where: { id: session.user.id },
     select: {
       id: true,
+      username: true,
       email: true,
       fullName: true,
       totpEnabled: true,
@@ -52,7 +53,7 @@ export default async function SecurityPage() {
 
       <SecuritySettings
         user={{
-          email: user.email,
+          username: user.username ?? user.email ?? "—",
           fullName: user.fullName,
           totpEnabled: user.totpEnabled,
           totpVerifiedAt: user.totpVerifiedAt?.toISOString() ?? null,

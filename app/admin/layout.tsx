@@ -12,10 +12,20 @@ import {
   Star,
   Salad,
   Users,
+  UserCog,
   type LucideIcon,
 } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { auth, signOut } from "@/auth";
+import {
+  canManageServices,
+  canManageSettings,
+  canManageTestimonials,
+  canManageUsers,
+  normalizeRole,
+  ROLE_LABELS,
+  ROLES,
+} from "@/lib/permissions";
 import { NotificationsBell } from "@/components/admin/notifications-bell";
 import { UserMenu } from "@/components/admin/user-menu";
 import { SessionProvider } from "@/components/providers/session-provider";
@@ -45,7 +55,13 @@ export default async function AdminLayout({
 
   const dbUser = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { id: true },
+    select: {
+      id: true,
+      role: true,
+      username: true,
+      email: true,
+      fullName: true,
+    },
   });
   if (!dbUser) {
     await signOut({
@@ -54,31 +70,77 @@ export default async function AdminLayout({
     redirect("/login?from=/admin&error=session_expired");
   }
 
+  const role = normalizeRole(dbUser.role);
   const pendingCount = await prisma.appointment.count({
     where: { status: "PENDING" },
   });
 
-  const NAV: { href: Route; label: string; icon: LucideIcon; badge?: number }[] =
-    [
-      { href: "/admin", label: "Genel Bakış", icon: LayoutDashboard },
-      {
-        href: "/admin/inbox",
-        label: "Onay Bekleyenler",
-        icon: Inbox,
-        badge: pendingCount,
-      },
-      { href: "/admin/appointments", label: "Tüm Randevular", icon: ClipboardList },
-      { href: "/admin/patients", label: "Hasta Dosyaları", icon: Users },
-      { href: "/admin/calendar", label: "Takvim", icon: CalendarDays },
-      { href: "/admin/services", label: "Hizmetler", icon: Salad },
-      { href: "/admin/testimonials", label: "Yorumlar", icon: Star },
-      { href: "/admin/security", label: "Güvenlik & 2FA", icon: ShieldCheck },
-      { href: "/admin/settings", label: "Ayarlar", icon: Settings },
-    ];
+  const fullNav: {
+    href: Route;
+    label: string;
+    icon: LucideIcon;
+    badge?: number;
+    show: boolean;
+  }[] = [
+    { href: "/admin", label: "Genel Bakış", icon: LayoutDashboard, show: true },
+    {
+      href: "/admin/inbox",
+      label: "Onay Bekleyenler",
+      icon: Inbox,
+      badge: pendingCount,
+      show: true,
+    },
+    {
+      href: "/admin/appointments",
+      label: "Tüm Randevular",
+      icon: ClipboardList,
+      show: true,
+    },
+    { href: "/admin/patients", label: "Hasta Dosyaları", icon: Users, show: true },
+    { href: "/admin/calendar", label: "Takvim", icon: CalendarDays, show: true },
+    {
+      href: "/admin/services",
+      label: "Hizmetler",
+      icon: Salad,
+      show: canManageServices(role),
+    },
+    {
+      href: "/admin/testimonials",
+      label: "Yorumlar",
+      icon: Star,
+      show: canManageTestimonials(role),
+    },
+    {
+      href: "/admin/users",
+      label: "Kullanıcı Yönetimi",
+      icon: UserCog,
+      show: canManageUsers(role),
+    },
+    {
+      href: "/admin/security",
+      label: "Güvenlik & 2FA",
+      icon: ShieldCheck,
+      show: true,
+    },
+    {
+      href: "/admin/settings",
+      label: "Ayarlar",
+      icon: Settings,
+      show: canManageSettings(role),
+    },
+  ];
 
-  const userName = session.user.name ?? session.user.email ?? "Admin";
-  const userEmail = session.user.email ?? "";
-  const initials = getInitials(userName);
+  const NAV = fullNav.filter((item) => item.show);
+
+  // Sidebar'da öne çıkan etiket: kullanıcı adı; alt etiket: ad soyad.
+  const primaryLabel = dbUser.username ?? dbUser.email ?? "Yönetici";
+  const secondaryLabel = dbUser.fullName ?? "";
+  const initials = getInitials(primaryLabel);
+
+  // Developer rolü panelde "Yönetici" olarak gösterilir; istisna: hesabın
+  // sahibi kendi paneline girerse kendi rolünü gerçek adıyla görür.
+  const roleBadge =
+    role === ROLES.DEVELOPER ? "Developer" : ROLE_LABELS[role];
 
   return (
     <SessionProvider>
@@ -115,9 +177,14 @@ export default async function AdminLayout({
           </nav>
 
           <div className="border-t border-emerald-100 p-3">
+            <div className="mb-2 flex items-center gap-2 px-2">
+              <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-800">
+                {roleBadge}
+              </span>
+            </div>
             <UserMenu
-              fullName={userName}
-              email={userEmail}
+              fullName={primaryLabel}
+              handle={secondaryLabel}
               initials={initials}
             />
           </div>

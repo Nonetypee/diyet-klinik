@@ -1,10 +1,31 @@
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { SettingsView } from "@/components/admin/settings-view";
 import { getLandingData } from "@/lib/landing-data.server";
+import { auth } from "@/auth";
+import {
+  canEditLanding,
+  canManageSettings,
+  normalizeRole,
+} from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
+  const session = await auth();
+  if (!session?.user?.id) {
+    redirect("/login?from=/admin/settings");
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { role: true },
+  });
+  const role = normalizeRole(user?.role);
+  if (!canManageSettings(role)) {
+    redirect("/admin");
+  }
+
   const slug = process.env.DEFAULT_CLINIC_SLUG ?? "diyet-klinik";
 
   const [clinic, dietician, services, landingData] = await Promise.all([
@@ -77,6 +98,7 @@ export default async function SettingsPage() {
         }))}
         workingHours={workingHours}
         landingContent={landingData.content}
+        canEditLanding={canEditLanding(role)}
       />
     </div>
   );

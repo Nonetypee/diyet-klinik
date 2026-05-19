@@ -50,7 +50,7 @@ export async function POST() {
 
     const secret = generateTotpSecret();
     const otpAuthUrl = buildOtpAuthUrl({
-      email: user.email,
+      accountLabel: user.username ?? user.email ?? user.fullName,
       secret,
     });
     const qrDataUrl = await generateQrDataUrl(otpAuthUrl);

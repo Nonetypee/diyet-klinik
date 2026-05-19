@@ -2,14 +2,22 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { ServicesManager } from "@/components/admin/services-manager";
+import { canManageServices, normalizeRole } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Hizmetler Yönetimi" };
 
 export default async function ServicesPage() {
   const session = await auth();
-  if (!session?.user) {
+  if (!session?.user?.id) {
     redirect("/login?from=/admin/services");
+  }
+  const me = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { role: true },
+  });
+  if (!canManageServices(normalizeRole(me?.role))) {
+    redirect("/admin");
   }
 
   const services = await prisma.service.findMany({

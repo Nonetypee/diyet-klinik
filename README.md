@@ -165,8 +165,8 @@ nano .env
 DATABASE_URL="file:/var/www/diyet-klinik/prisma/dev.db"
 NEXTAUTH_SECRET="..."         # openssl rand -base64 32 ile üretin
 NEXTAUTH_URL="https://selinakar.com.tr"
-ADMIN_EMAIL="siz@email.com"
-ADMIN_PASSWORD="güçlü-uzun-şifre"
+DEVELOPER_USERNAME="developer"   # admin paneline gizli üst yetkili giriş
+DEVELOPER_PASSWORD="güçlü-uzun-şifre"
 ```
 
 NEXTAUTH_SECRET üretmek için:

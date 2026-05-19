@@ -92,7 +92,7 @@ export const authConfig = {
     jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = (user as { id: string }).id;
-        token.role = (user as { role?: string }).role ?? "SECRETARY";
+        token.role = (user as { role?: string }).role ?? "STAFF";
       }
       // session.update() çağrıldığında token'ı güncelle (2FA sonrası vb.)
       if (trigger === "update" && session) {

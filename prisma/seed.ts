@@ -253,35 +253,107 @@ async function main() {
     },
   });
 
-  // 6. Admin kullanıcısı (NextAuth giriş için)
-  const adminEmail = process.env.ADMIN_EMAIL ?? "admin@diyetklinik.com";
-  const adminPassword = process.env.ADMIN_PASSWORD ?? "admin1234";
-  const existingAdmin = await prisma.user.findUnique({
-    where: { email: adminEmail },
+  // 6. Eski hesapların username alanını doldur (mevcut kurulumlardan
+  //    yükseltme için). Yoksa atla.
+  const usersWithoutUsername = await prisma.user.findMany({
+    where: { username: null },
+    select: { id: true, email: true },
   });
-  if (!existingAdmin) {
-    const passwordHash = await hash(adminPassword, 10);
-    await prisma.user.create({
-      data: {
-        email: adminEmail,
-        passwordHash,
-        fullName: "Dyt. Selin Akar",
-        phone: clinic.phone,
-        role: "DIETICIAN",
-        isActive: true,
-      },
+  for (const u of usersWithoutUsername) {
+    const base =
+      (u.email ?? "user").split("@")[0].toLowerCase().replace(/[^a-z0-9_]/g, "") ||
+      "user";
+    let candidate = base;
+    let i = 0;
+    while (
+      await prisma.user.findFirst({
+        where: { username: candidate, NOT: { id: u.id } },
+      })
+    ) {
+      i += 1;
+      candidate = `${base}${i}`;
+    }
+    await prisma.user.update({
+      where: { id: u.id },
+      data: { username: candidate },
     });
-    console.log("   Admin oluşturuldu:", adminEmail);
+    console.log(`   Username dolduruldu: ${u.email ?? u.id} → ${candidate}`);
+  }
+
+  // 7. DEVELOPER hesabı — yalnızca .env üzerinden yönetilir.
+  //    Şifre her seed çalıştırıldığında env değerine senkronlanır;
+  //    böylece kaybedildiyse env üzerinden değiştirip seed çalıştırmak yeterli.
+  const devUsername = process.env.DEVELOPER_USERNAME ?? "developer";
+  const devPassword = process.env.DEVELOPER_PASSWORD ?? null;
+
+  if (!devPassword) {
+    console.warn(
+      "   ⚠ DEVELOPER_PASSWORD .env içinde tanımlı değil — developer hesabı oluşturulmadı."
+    );
   } else {
-    console.log("   Admin zaten mevcut:", adminEmail);
+    const passwordHash = await hash(devPassword, 10);
+    const existingDev = await prisma.user.findUnique({
+      where: { username: devUsername },
+    });
+    if (!existingDev) {
+      // Eski kurulumdaki admin'i developer'a yükselt
+      const legacyAdmin =
+        (await prisma.user.findFirst({
+          where: { role: { in: ["DEVELOPER", "SUPER_ADMIN", "DIETICIAN"] } },
+        })) ?? null;
+
+      if (legacyAdmin) {
+        await prisma.user.update({
+          where: { id: legacyAdmin.id },
+          data: {
+            username: devUsername,
+            passwordHash,
+            role: "DEVELOPER",
+            isActive: true,
+          },
+        });
+        console.log(
+          `   Mevcut hesap developer'a yükseltildi: ${devUsername}`
+        );
+      } else {
+        await prisma.user.create({
+          data: {
+            username: devUsername,
+            passwordHash,
+            fullName: "Developer",
+            role: "DEVELOPER",
+            isActive: true,
+          },
+        });
+        console.log(`   Developer hesabı oluşturuldu: ${devUsername}`);
+      }
+    } else {
+      await prisma.user.update({
+        where: { id: existingDev.id },
+        data: {
+          passwordHash,
+          role: "DEVELOPER",
+          isActive: true,
+        },
+      });
+      console.log(`   Developer şifresi .env ile senkronlandı: ${devUsername}`);
+    }
   }
 
   console.log("✅ Seed tamamlandı.");
   console.log("   Klinik:", clinic.slug);
   console.log("   Hizmet sayısı:", DIETITIAN_SERVICES.length);
   console.log("");
-  console.log("🔐 Giriş için: /login — e-posta:", adminEmail);
-  console.log("   (Şifre: ortamda ADMIN_PASSWORD veya varsayılan geliştirme değeri.)");
+  if (devPassword) {
+    console.log(
+      `🔐 Giriş için: /login — kullanıcı adı: ${devUsername}`
+    );
+    console.log("   (Şifre: .env içindeki DEVELOPER_PASSWORD)");
+  } else {
+    console.log(
+      "🔐 Developer hesabı oluşturulmadı. .env içinde DEVELOPER_PASSWORD tanımlayıp tekrar seed çalıştırın."
+    );
+  }
   console.log("");
 }
 

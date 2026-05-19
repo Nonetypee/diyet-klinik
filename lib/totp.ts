@@ -37,10 +37,11 @@ export function generateTotpSecret(): string {
  * Format: otpauth://totp/{App}:{user}?secret=...&issuer={App}
  */
 export function buildOtpAuthUrl(params: {
-  email: string;
+  /** Authenticator uygulamasında etiket olarak gösterilecek kullanıcı tanımlayıcısı. */
+  accountLabel: string;
   secret: string;
 }): string {
-  return authenticator.keyuri(params.email, APP_NAME, params.secret);
+  return authenticator.keyuri(params.accountLabel, APP_NAME, params.secret);
 }
 
 /**

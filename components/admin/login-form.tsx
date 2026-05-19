@@ -5,7 +5,7 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import {
-  Mail,
+  User,
   Lock,
   Loader2,
   AlertCircle,
@@ -46,7 +46,7 @@ export function LoginForm({ callbackUrl, initialError }: Props) {
   const [step, setStep] = useState<Step>("credentials");
 
   // Step 1
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
@@ -65,7 +65,7 @@ export function LoginForm({ callbackUrl, initialError }: Props) {
 
   async function attemptSignIn(extra: { totpCode?: string }) {
     return signIn("credentials", {
-      email: email.trim().toLowerCase(),
+      username: username.trim().toLowerCase(),
       password,
       totpCode: extra.totpCode ?? "",
       redirect: false,
@@ -92,7 +92,7 @@ export function LoginForm({ callbackUrl, initialError }: Props) {
         setStep("totp");
         setError(null);
       } else if (code === "INVALID_CREDENTIALS") {
-        setError("E-posta veya şifre hatalı");
+        setError("Kullanıcı adı veya şifre hatalı");
       } else {
         setError("Giriş yapılamadı, lütfen tekrar deneyin");
       }
@@ -247,18 +247,19 @@ export function LoginForm({ callbackUrl, initialError }: Props) {
       )}
 
       <div>
-        <Label htmlFor="email">E-posta</Label>
+        <Label htmlFor="username">Kullanıcı Adı</Label>
         <div className="relative mt-1.5">
-          <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+          <User className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
           <Input
-            id="email"
-            type="email"
-            autoComplete="email"
+            id="username"
+            type="text"
+            autoComplete="username"
             required
+            autoFocus
             className="pl-9"
-            placeholder="ornek@klinik.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            placeholder="kullanici_adi"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
           />
         </div>
       </div>
@@ -307,11 +308,6 @@ export function LoginForm({ callbackUrl, initialError }: Props) {
         )}
         Giriş Yap
       </Button>
-
-      <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
-        <strong className="font-semibold text-slate-900">Demo girişi:</strong>{" "}
-        admin@diyetklinik.com / admin1234
-      </div>
     </form>
   );
 }

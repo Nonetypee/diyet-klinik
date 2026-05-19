@@ -322,11 +322,16 @@ model LandingContent {
 
 model User {
   id            String    @id @default(cuid())
-  email         String    @unique
+  // Birincil giriş alanı. Yeni kayıtlarda zorunlu; mevcut hesaplar için
+  // seed migration sırasında doldurulur. NULL'a izin verilir ki SQLite
+  // db push veri kaybetmesin.
+  username      String?   @unique
+  // İletişim için opsiyonel — artık girişte kullanılmaz.
+  email         String?   @unique
   passwordHash  String
   fullName      String
   phone         String?
-  role          String    @default("SECRETARY") // SUPER_ADMIN | DIETICIAN | SECRETARY
+  role          String    @default("STAFF") // DEVELOPER | ADMIN | STAFF
   isActive      Boolean   @default(true)
 
   // TOTP / 2FA — RFC 6238

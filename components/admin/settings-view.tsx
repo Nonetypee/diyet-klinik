@@ -93,13 +93,16 @@ export function SettingsView({
   services,
   workingHours,
   landingContent,
+  canEditLanding,
 }: {
   clinic: ClinicData | null;
   dietician: DieticianData | null;
   services: ServiceData[];
   workingHours: Record<string, { open?: string; close?: string; closed?: boolean }>;
   landingContent: LandingContentValues;
+  canEditLanding: boolean;
 }) {
+  const visibleTabs = TABS.filter((t) => t.key !== "landing" || canEditLanding);
   const [activeTab, setActiveTab] = useState<TabKey>("clinic");
   const [clinicForm, setClinicForm] = useState<ClinicData | null>(clinic);
   const [dieticianForm, setDieticianForm] = useState<DieticianData | null>(
@@ -165,7 +168,7 @@ export function SettingsView({
       <Card>
         <CardContent className="p-2">
           <nav className="flex flex-col gap-0.5">
-            {TABS.map((tab) => (
+            {visibleTabs.map((tab) => (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
@@ -484,7 +487,7 @@ export function SettingsView({
           </Card>
         )}
 
-        {activeTab === "landing" && (
+        {activeTab === "landing" && canEditLanding && (
           <LandingContentEditor initial={landingContent} />
         )}
 

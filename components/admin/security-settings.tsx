@@ -23,7 +23,7 @@ import { toast } from "@/components/ui/toaster";
 import { cn } from "@/lib/utils";
 
 interface UserData {
-  email: string;
+  username: string;
   fullName: string;
   totpEnabled: boolean;
   totpVerifiedAt: string | null;
@@ -166,7 +166,7 @@ export function SecuritySettings({ user }: { user: UserData }) {
   function downloadBackupCodes() {
     const text = [
       "Diyet Klinik — 2FA Yedek Kodlar",
-      `E-posta: ${user.email}`,
+      `Kullanıcı: ${user.username}`,
       `Oluşturulma: ${new Date().toLocaleString("tr-TR")}`,
       "",
       "Bu kodları güvenli bir yerde saklayın. Her biri SADECE BİR KEZ kullanılabilir.",
@@ -575,8 +575,8 @@ export function SecuritySettings({ user }: { user: UserData }) {
           />
           <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
             <div>
-              <dt className="text-slate-500">E-posta</dt>
-              <dd className="font-medium text-slate-900">{user.email}</dd>
+              <dt className="text-slate-500">Kullanıcı Adı</dt>
+              <dd className="font-medium text-slate-900">{user.username}</dd>
             </div>
             <div>
               <dt className="text-slate-500">Ad Soyad</dt>

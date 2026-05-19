@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
+import { canEditLanding, normalizeRole } from "@/lib/permissions";
 
 const hexColor = z
   .string()
@@ -70,8 +71,19 @@ const landingSchema = z.object({
 
 export async function POST(req: NextRequest) {
   const session = await auth();
-  if (!session?.user) {
+  if (!session?.user?.id) {
     return NextResponse.json({ message: "Yetkisiz" }, { status: 401 });
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { role: true },
+  });
+  if (!canEditLanding(normalizeRole(user?.role))) {
+    return NextResponse.json(
+      { message: "Bu işlem için yetkiniz yok (sadece Developer)." },
+      { status: 403 }
+    );
   }
 
   try {

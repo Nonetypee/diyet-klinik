@@ -6,11 +6,12 @@ import { LogOut, ChevronUp, User, ShieldCheck } from "lucide-react";
 
 interface Props {
   fullName: string;
-  email: string;
+  /** Kullanıcı adı veya e-posta — alt etiket olarak gösterilir. */
+  handle: string;
   initials: string;
 }
 
-export function UserMenu({ fullName, email, initials }: Props) {
+export function UserMenu({ fullName, handle, initials }: Props) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -37,7 +38,7 @@ export function UserMenu({ fullName, email, initials }: Props) {
           <div className="line-clamp-1 font-medium text-slate-900">
             {fullName}
           </div>
-          <div className="line-clamp-1 text-xs text-slate-500">{email}</div>
+          <div className="line-clamp-1 text-xs text-slate-500">{handle}</div>
         </div>
         <ChevronUp
           className={`h-4 w-4 text-slate-400 transition-transform ${
