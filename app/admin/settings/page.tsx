@@ -1,17 +1,19 @@
 import { prisma } from "@/lib/db";
 import { SettingsView } from "@/components/admin/settings-view";
+import { getLandingData } from "@/lib/landing-data.server";
 
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
   const slug = process.env.DEFAULT_CLINIC_SLUG ?? "diyet-klinik";
 
-  const [clinic, dietician, services] = await Promise.all([
+  const [clinic, dietician, services, landingData] = await Promise.all([
     prisma.clinic.findUnique({ where: { slug } }),
     prisma.dietician.findFirst({ where: { isActive: true } }),
     prisma.service.findMany({
       orderBy: { sortOrder: "asc" },
     }),
+    getLandingData(),
   ]);
 
   // Çalışma saatleri parse
@@ -74,6 +76,7 @@ export default async function SettingsPage() {
           category: s.category,
         }))}
         workingHours={workingHours}
+        landingContent={landingData.content}
       />
     </div>
   );

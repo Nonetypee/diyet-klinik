@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { DIETITIAN_SERVICES } from "@/lib/services-config";
+import type { LandingContentValues } from "@/lib/landing-data";
 
 interface ServiceItem {
   slug: string;
@@ -56,7 +57,13 @@ function mergeServices(items?: ServiceItem[]): ServiceItem[] {
   });
 }
 
-export function Services({ items }: { items?: ServiceItem[] }) {
+export function Services({
+  items,
+  content,
+}: {
+  items?: ServiceItem[];
+  content?: LandingContentValues;
+}) {
   const services = mergeServices(items);
 
   return (
@@ -64,20 +71,24 @@ export function Services({ items }: { items?: ServiceItem[] }) {
       <div className="mx-auto max-w-7xl px-6">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div className="max-w-2xl">
-            <span className="inline-flex items-center rounded-full bg-emerald-50 px-4 py-1.5 text-sm font-medium text-emerald-700 ring-1 ring-emerald-100">
-              Hizmetlerim
+            <span
+              className="inline-flex items-center rounded-full bg-emerald-50 px-4 py-1.5 text-sm font-medium ring-1 ring-emerald-100"
+              style={{ color: "var(--brand)" }}
+            >
+              {content?.servicesBadge ?? "Hizmetlerim"}
             </span>
             <h2 className="mt-5 text-balance text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">
-              Her hedef için, kişiye özel bir plan.
+              {content?.servicesTitle ?? "Her hedef için, kişiye özel bir plan."}
             </h2>
             <p className="mt-4 text-lg leading-relaxed text-slate-600">
-              Kilo yönetiminden sporcu beslenmesine, hamilelik dönemine ve
-              hastalık bazlı medikal beslenmeye uzanan kapsamlı bir uzmanlık.
+              {content?.servicesSubtitle ??
+                "Kilo yönetiminden sporcu beslenmesine, hamilelik dönemine ve hastalık bazlı medikal beslenmeye uzanan kapsamlı bir uzmanlık."}
             </p>
           </div>
           <Link
             href="#randevu"
-            className="group inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-800"
+            className="group inline-flex items-center gap-1.5 text-sm font-semibold"
+            style={{ color: "var(--brand-dark)" }}
           >
             Randevu talebi oluştur
             <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
@@ -92,7 +103,10 @@ export function Services({ items }: { items?: ServiceItem[] }) {
                 key={s.slug}
                 className="group relative flex flex-col rounded-2xl border border-slate-200 bg-white p-6 transition-all hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-lg hover:shadow-emerald-100/50"
               >
-                <div className="mb-5 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 transition-colors group-hover:bg-emerald-100">
+                <div
+                  className="mb-5 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 transition-colors group-hover:bg-emerald-100"
+                  style={{ color: "var(--brand)" }}
+                >
                   <Icon className="h-5 w-5" strokeWidth={2} />
                 </div>
                 <h3 className="text-base font-semibold text-slate-900">

@@ -6,82 +6,101 @@ import {
   ArrowRight,
   BadgeCheck,
   Leaf,
+  Award,
+  HeartPulse,
+  type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { LandingClinic, LandingDietician } from "@/lib/landing-data";
+import type {
+  LandingClinic,
+  LandingDietician,
+  LandingContentValues,
+} from "@/lib/landing-data";
 
 interface Props {
   clinic: LandingClinic;
   dietician: LandingDietician;
+  content: LandingContentValues;
 }
 
-export function Hero({ clinic, dietician }: Props) {
-  const tagline =
-    clinic.tagline ?? "Bilime dayalı, kişiye özel beslenme";
+const TRUST_ICON_MAP: Record<string, LucideIcon> = {
+  ShieldCheck,
+  Sprout,
+  BadgeCheck,
+  Leaf,
+  Award,
+  HeartPulse,
+  Star,
+};
 
-  const experienceBadge = dietician.yearsOfExperience
-    ? `${dietician.yearsOfExperience}+ yıl klinik deneyim`
-    : "Klinik deneyim";
-
+export function Hero({ clinic, dietician, content }: Props) {
   const fullDietName = `${dietician.title} ${dietician.fullName}`.trim();
+  const gradientStyle = {
+    backgroundImage: `linear-gradient(90deg, var(--brand), var(--brand-accent))`,
+    WebkitBackgroundClip: "text",
+    backgroundClip: "text",
+    color: "transparent",
+  };
 
   return (
     <section className="relative overflow-hidden bg-natural-mesh">
-      {/* Doğal yumuşak gölgeler */}
       <div className="pointer-events-none absolute -right-32 -top-24 h-80 w-80 rounded-full bg-emerald-100/40 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-32 -left-24 h-80 w-80 rounded-full bg-teal-100/30 blur-3xl" />
 
       <div className="relative mx-auto grid max-w-7xl items-center gap-16 px-6 py-20 lg:grid-cols-12 lg:py-28">
         {/* Sol Kolon — Mesaj */}
         <div className="lg:col-span-7">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-100 bg-white/80 px-3 py-1.5 text-xs font-medium text-emerald-800 shadow-sm">
-            <Leaf className="h-3.5 w-3.5 text-emerald-600" />
-            {tagline}
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-100 bg-white/80 px-3 py-1.5 text-xs font-medium text-[color:var(--brand-dark)] shadow-sm">
+            <Leaf className="h-3.5 w-3.5" style={{ color: "var(--brand)" }} />
+            {content.heroBadge}
           </div>
 
           <h1 className="text-balance text-5xl font-semibold tracking-tight text-slate-900 sm:text-6xl lg:text-[68px] lg:leading-[1.05]">
-            Sağlıklı yaşam,{" "}
-            <span className="bg-gradient-to-r from-emerald-700 to-teal-500 bg-clip-text text-transparent">
-              sürdürülebilir
-            </span>
+            {content.heroTitlePart1}{" "}
+            <span style={gradientStyle}>{content.heroTitleAccent}</span>
             <br />
-            beslenme alışkanlığıyla başlar.
+            {content.heroTitlePart2}
           </h1>
 
           <p className="mt-6 max-w-xl text-balance text-lg leading-relaxed text-slate-600">
-            Yo-yo diyetlerine veda. Yaşam tarzınıza, hedefinize ve
-            laboratuvar değerlerinize göre kişiselleştirilmiş, bilim
-            temelli bir beslenme planıyla kalıcı sonuçlara birlikte
-            ulaşalım.
+            {content.heroSubtitle}
           </p>
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
-            <Button asChild size="lg" variant="primary" className="h-12 px-6 text-base">
+            <Button
+              asChild
+              size="lg"
+              variant="primary"
+              className="h-12 px-6 text-base"
+              style={{ backgroundColor: "var(--brand)" }}
+            >
               <Link href="#randevu">
-                Hemen Randevu Talep Et
+                {content.heroCtaPrimary}
                 <ArrowRight className="ml-1.5 h-4 w-4" />
               </Link>
             </Button>
             <Button asChild variant="outline" size="lg" className="h-12 px-6 text-base">
-              <Link href="#hizmetler">Hizmetlerimi İnceleyin</Link>
+              <Link href="#hizmetler">{content.heroCtaSecondary}</Link>
             </Button>
           </div>
 
-          {/* Mikro güven sinyalleri */}
-          <div className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-3 text-sm text-slate-600">
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="h-5 w-5 text-emerald-600" />
-              <span>KVKK Uyumlu</span>
+          {/* Güven sinyalleri (admin panelden düzenlenir) */}
+          {content.heroTrustSignals.length > 0 && (
+            <div className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-3 text-sm text-slate-600">
+              {content.heroTrustSignals.map((signal, idx) => {
+                const Icon = TRUST_ICON_MAP[signal.icon] ?? ShieldCheck;
+                return (
+                  <div key={idx} className="flex items-center gap-2">
+                    <Icon
+                      className="h-5 w-5"
+                      style={{ color: "var(--brand)" }}
+                    />
+                    <span>{signal.text}</span>
+                  </div>
+                );
+              })}
             </div>
-            <div className="flex items-center gap-2">
-              <Sprout className="h-5 w-5 text-emerald-600" />
-              <span>{experienceBadge}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <BadgeCheck className="h-5 w-5 text-emerald-600" />
-              <span>{dietician.specialty}</span>
-            </div>
-          </div>
+          )}
         </div>
 
         {/* Sağ Kolon — Görsel Kart */}
@@ -90,7 +109,10 @@ export function Hero({ clinic, dietician }: Props) {
             <div className="rounded-[20px] bg-gradient-to-br from-emerald-50/60 to-white p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-xs font-medium uppercase tracking-wider text-emerald-700">
+                  <div
+                    className="text-xs font-medium uppercase tracking-wider"
+                    style={{ color: "var(--brand)" }}
+                  >
                     Randevu Talebiniz
                   </div>
                   <div className="mt-1 text-lg font-semibold text-slate-900">
@@ -98,7 +120,10 @@ export function Hero({ clinic, dietician }: Props) {
                   </div>
                 </div>
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100">
-                  <BadgeCheck className="h-5 w-5 text-emerald-700" />
+                  <BadgeCheck
+                    className="h-5 w-5"
+                    style={{ color: "var(--brand)" }}
+                  />
                 </div>
               </div>
 
@@ -120,19 +145,24 @@ export function Hero({ clinic, dietician }: Props) {
                 <div className="font-medium text-white">SMS Bildirimi</div>
                 <div className="mt-1 text-slate-300">
                   Sayın Danışan, randevunuz{" "}
-                  <span className="text-emerald-400">onaylanmıştır</span>.
-                  14.05.2026 14:30. Bilgi: {clinic.phone}
+                  <span style={{ color: "var(--brand-accent)" }}>
+                    onaylanmıştır
+                  </span>
+                  . 14.05.2026 14:30. Bilgi: {clinic.phone}
                 </div>
               </div>
 
               <div className="mt-4 flex items-center justify-between text-xs text-slate-500">
                 <div className="flex items-center gap-1">
-                  <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                  <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                  <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                  <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                  <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                  <span className="ml-1.5 font-medium text-slate-700">4.9 / 5.0</span>
+                  {[0, 1, 2, 3, 4].map((i) => (
+                    <Star
+                      key={i}
+                      className="h-3.5 w-3.5 fill-amber-400 text-amber-400"
+                    />
+                  ))}
+                  <span className="ml-1.5 font-medium text-slate-700">
+                    4.9 / 5.0
+                  </span>
                 </div>
                 <span>1.500+ memnun danışan</span>
               </div>
@@ -159,9 +189,10 @@ function Row({
       <span
         className={
           highlight
-            ? "rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800"
+            ? "rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold"
             : "text-sm font-medium text-slate-900"
         }
+        style={highlight ? { color: "var(--brand-dark)" } : undefined}
       >
         {value}
       </span>

@@ -23,6 +23,9 @@ import { toast } from "@/components/ui/toaster";
 import { cn } from "@/lib/utils";
 import { WorkingHoursEditor } from "@/components/admin/working-hours-editor";
 import { MessagingConfigEditor } from "@/components/admin/messaging-config-editor";
+import { LandingContentEditor } from "@/components/admin/landing-content-editor";
+import type { LandingContentValues } from "@/lib/landing-defaults";
+import { Sparkles } from "lucide-react";
 
 interface ClinicData {
   name: string;
@@ -55,11 +58,19 @@ interface ServiceData {
   category: string;
 }
 
-type TabKey = "clinic" | "dietician" | "hours" | "services" | "messaging" | "kvkk";
+type TabKey =
+  | "clinic"
+  | "dietician"
+  | "landing"
+  | "hours"
+  | "services"
+  | "messaging"
+  | "kvkk";
 
 const TABS: { key: TabKey; label: string; icon: React.ElementType }[] = [
   { key: "clinic",     label: "Klinik Bilgileri", icon: Building2 },
   { key: "dietician",  label: "Diyetisyen Profili", icon: User },
+  { key: "landing",    label: "Anasayfa İçeriği", icon: Sparkles },
   { key: "hours",      label: "Çalışma Saatleri", icon: Clock },
   { key: "services",   label: "Hizmetler", icon: ListChecks },
   { key: "messaging",  label: "Mesajlaşma", icon: MessageSquareText },
@@ -81,11 +92,13 @@ export function SettingsView({
   dietician,
   services,
   workingHours,
+  landingContent,
 }: {
   clinic: ClinicData | null;
   dietician: DieticianData | null;
   services: ServiceData[];
   workingHours: Record<string, { open?: string; close?: string; closed?: boolean }>;
+  landingContent: LandingContentValues;
 }) {
   const [activeTab, setActiveTab] = useState<TabKey>("clinic");
   const [clinicForm, setClinicForm] = useState<ClinicData | null>(clinic);
@@ -469,6 +482,10 @@ export function SettingsView({
               </div>
             </CardContent>
           </Card>
+        )}
+
+        {activeTab === "landing" && (
+          <LandingContentEditor initial={landingContent} />
         )}
 
         {activeTab === "messaging" && <MessagingConfigEditor />}

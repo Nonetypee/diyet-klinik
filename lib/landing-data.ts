@@ -6,6 +6,15 @@
  * fonksiyonlar içerir).
  */
 
+export type {
+  HeroTrustSignal,
+  TrustPillar,
+  TrustStat,
+  HowStep,
+  FaqItem,
+  LandingContentValues,
+} from "@/lib/landing-defaults";
+
 export interface LandingClinic {
   name: string;
   tagline: string | null;

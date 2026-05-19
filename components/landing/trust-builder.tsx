@@ -5,56 +5,43 @@ import {
   Video,
   MessageCircle,
   ShieldCheck,
+  Sparkles,
+  HeartPulse,
+  Award,
+  type LucideIcon,
 } from "lucide-react";
-import type { LandingDietician } from "@/lib/landing-data";
+import type {
+  LandingDietician,
+  LandingContentValues,
+} from "@/lib/landing-data";
 
-const PILLARS = [
-  {
-    icon: FlaskConical,
-    title: "Bilim Temelli Yaklaşım",
-    description:
-      "Akademik beslenme bilimi ve güncel klinik araştırmalara dayanan, kanıta dayalı diyet protokolleri uygulanır.",
-  },
-  {
-    icon: UserCheck,
-    title: "Kişiye Özel Plan",
-    description:
-      "Yaşam tarzınız, alışkanlıklarınız, alerjileriniz ve laboratuvar değerlerinize göre özelleştirilmiş program.",
-  },
-  {
-    icon: Repeat,
-    title: "Sürdürülebilir Sonuç",
-    description:
-      "Geçici diyetler değil — kalıcı yaşam değişimi. Yo-yo etkisi olmadan, beslenme alışkanlığı kazandırır.",
-  },
-  {
-    icon: Video,
-    title: "Online & Yüz Yüze",
-    description:
-      "Türkiye ve dünyanın her yerinden video görüşme, ya da Kadıköy'deki kliniğimde yüz yüze danışmanlık.",
-  },
-  {
-    icon: MessageCircle,
-    title: "Sürekli Takip & Destek",
-    description:
-      "WhatsApp destek hattı, haftalık check-in ve dijital plan ile süreç boyunca yanınızdayım.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "KVKK Uyumlu",
-    description:
-      "Sağlık verileriniz 6698 sayılı KVKK çerçevesinde şifrelenerek saklanır, üçüncü tarafla paylaşılmaz.",
-  },
-];
+const PILLAR_ICON_MAP: Record<string, LucideIcon> = {
+  FlaskConical,
+  UserCheck,
+  Repeat,
+  Video,
+  MessageCircle,
+  ShieldCheck,
+  Sparkles,
+  HeartPulse,
+  Award,
+};
 
 interface Props {
   dietician: LandingDietician;
+  content: LandingContentValues;
 }
 
-export function TrustBuilder({ dietician }: Props) {
-  const experienceLabel = dietician.yearsOfExperience
-    ? `${dietician.yearsOfExperience} yıl`
-    : "Klinik";
+export function TrustBuilder({ dietician, content }: Props) {
+  // Trust stats DB'de [["1.500+", "Memnun"], ...] — admin değiştirmemişse
+  // 2. sütundaki "9 yıl klinik deneyim" satırını runtime'da deneyim yılıyla güncelleyelim
+  const stats = content.trustStats.map((row, idx) => {
+    if (idx === 1 && dietician.yearsOfExperience && row[1].includes("deneyim")) {
+      return [`${dietician.yearsOfExperience} yıl`, row[1]] as const;
+    }
+    return row;
+  });
+
   return (
     <section
       id="neden-biz"
@@ -62,54 +49,62 @@ export function TrustBuilder({ dietician }: Props) {
     >
       <div className="mx-auto max-w-7xl px-6">
         <div className="mx-auto max-w-3xl text-center">
-          <span className="inline-flex items-center rounded-full bg-emerald-50 px-4 py-1.5 text-sm font-medium text-emerald-700 ring-1 ring-emerald-100">
-            Neden Beni Seçmelisiniz?
+          <span
+            className="inline-flex items-center rounded-full bg-emerald-50 px-4 py-1.5 text-sm font-medium ring-1 ring-emerald-100"
+            style={{ color: "var(--brand)" }}
+          >
+            {content.trustBadge}
           </span>
-          <h2 className="mt-5 text-balance text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">
-            Sürdürülebilir sonuç,
-            <br />
-            şeffaf süreç.
+          <h2 className="mt-5 whitespace-pre-line text-balance text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">
+            {content.trustTitle}
           </h2>
           <p className="mt-5 text-balance text-lg leading-relaxed text-slate-600">
-            Yo-yo diyetler ve genel-geçer öneriler size zaman kaybettiriyor.
-            Bilime dayalı, kişiye özel bir plan ile gerçek sağlık dönüşümü
-            mümkün.
+            {content.trustSubtitle}
           </p>
         </div>
 
         <div className="mt-16 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {PILLARS.map((p) => (
-            <div
-              key={p.title}
-              className="group relative rounded-2xl border border-slate-200 bg-white p-7 transition-all hover:border-emerald-200 hover:shadow-md hover:shadow-emerald-100/40"
-            >
-              <div className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 transition-colors group-hover:bg-emerald-100">
-                <p.icon className="h-6 w-6" strokeWidth={2} />
+          {content.trustPillars.map((p, idx) => {
+            const Icon = PILLAR_ICON_MAP[p.icon] ?? ShieldCheck;
+            return (
+              <div
+                key={idx}
+                className="group relative rounded-2xl border border-slate-200 bg-white p-7 transition-all hover:border-emerald-200 hover:shadow-md hover:shadow-emerald-100/40"
+              >
+                <div
+                  className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 transition-colors group-hover:bg-emerald-100"
+                  style={{ color: "var(--brand)" }}
+                >
+                  <Icon className="h-6 w-6" strokeWidth={2} />
+                </div>
+                <h3 className="text-lg font-semibold text-slate-900">{p.title}</h3>
+                <p className="mt-2 leading-relaxed text-slate-600">
+                  {p.description}
+                </p>
               </div>
-              <h3 className="text-lg font-semibold text-slate-900">{p.title}</h3>
-              <p className="mt-2 leading-relaxed text-slate-600">
-                {p.description}
-              </p>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* İstatistik şeridi */}
-        <div className="mt-16 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-emerald-100 bg-emerald-100 lg:grid-cols-4">
-          {[
-            ["1.500+", "Memnun danışan"],
-            [experienceLabel, "Klinik deneyim"],
-            ["%92", "Hedef başarısı"],
-            ["7/24", "Randevu talebi"],
-          ].map(([n, l]) => (
-            <div key={l} className="bg-white px-6 py-8 text-center">
-              <div className="text-4xl font-semibold tracking-tight text-emerald-800">
-                {n}
+        {stats.length > 0 && (
+          <div
+            className="mt-16 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border bg-emerald-100 lg:grid-cols-4"
+            style={{ borderColor: "var(--brand)", opacity: 1 }}
+          >
+            {stats.map(([n, l], i) => (
+              <div key={i} className="bg-white px-6 py-8 text-center">
+                <div
+                  className="text-4xl font-semibold tracking-tight"
+                  style={{ color: "var(--brand-dark)" }}
+                >
+                  {n}
+                </div>
+                <div className="mt-1.5 text-sm text-slate-600">{l}</div>
               </div>
-              <div className="mt-1.5 text-sm text-slate-600">{l}</div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

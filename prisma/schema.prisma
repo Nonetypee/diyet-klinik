@@ -252,6 +252,74 @@ model MessagingConfig {
   createdAt DateTime @default(now())
 }
 
+// ============================================================
+// ANASAYFA İÇERİĞİ
+// Tüm landing page metinleri ve marka renkleri. Singleton kayıt.
+// JSON alanlar (pillars, stats, steps, faqs, trustSignals) admin panelde
+// repeater UI ile düzenlenir.
+// ============================================================
+
+model LandingContent {
+  id String @id @default("singleton")
+
+  // Marka Renkleri (CSS değişkenleri olarak yayılır)
+  primaryColor    String  @default("#047857") // emerald-700 → ana vurgu
+  primaryColorDark String @default("#065f46") // emerald-800 → koyu varyant
+  accentColor     String  @default("#14b8a6") // teal-500   → ikinci vurgu
+  darkBgColor     String  @default("#064e3b") // emerald-900 → CTA arkaplan
+
+  // Hero
+  heroBadge       String @default("Bilime dayalı, kişiye özel beslenme")
+  heroTitlePart1  String @default("Sağlıklı yaşam,")
+  heroTitleAccent String @default("sürdürülebilir")
+  heroTitlePart2  String @default("beslenme alışkanlığıyla başlar.")
+  heroSubtitle    String @default("Yo-yo diyetlerine veda. Yaşam tarzınıza, hedefinize ve laboratuvar değerlerinize göre kişiselleştirilmiş, bilim temelli bir beslenme planıyla kalıcı sonuçlara birlikte ulaşalım.")
+  heroCtaPrimary   String @default("Hemen Randevu Talep Et")
+  heroCtaSecondary String @default("Hizmetlerimi İnceleyin")
+  // JSON: [{ icon: "ShieldCheck", text: "KVKK Uyumlu" }, ...]
+  heroTrustSignals String @default("[]")
+
+  // Trust Builder
+  trustBadge    String @default("Neden Beni Seçmelisiniz?")
+  trustTitle    String @default("Sürdürülebilir sonuç,\nşeffaf süreç.")
+  trustSubtitle String @default("Yo-yo diyetler ve genel-geçer öneriler size zaman kaybettiriyor. Bilime dayalı, kişiye özel bir plan ile gerçek sağlık dönüşümü mümkün.")
+  // JSON: [{ icon: "FlaskConical", title, description }]
+  trustPillars  String @default("[]")
+  // JSON: [["1.500+", "Memnun danışan"], ...]
+  trustStats    String @default("[]")
+
+  // Services bölümü başlık
+  servicesBadge    String @default("Hizmetlerim")
+  servicesTitle    String @default("Her hedef için, kişiye özel bir plan.")
+  servicesSubtitle String @default("Kilo yönetiminden sporcu beslenmesine, hamilelik dönemine ve hastalık bazlı medikal beslenmeye uzanan kapsamlı bir uzmanlık.")
+
+  // How It Works
+  howBadge    String @default("Nasıl Çalışır?")
+  howTitle    String @default("Onay-öncelikli, şeffaf bir akış")
+  howSubtitle String @default("Otomatik onay yerine her randevu titizlikle kontrol edilir. Hata payı yoktur, çakışma yaşanmaz.")
+  // JSON: [{ number, icon, title, description }]
+  howSteps    String @default("[]")
+
+  // Randevu bölümü (form üstü)
+  bookingBadge    String @default("Randevu Talebi")
+  bookingTitle    String @default("Sağlıklı yaşam için ilk adımı atın")
+  bookingSubtitle String @default("Formu doldurun, en kısa sürede randevunuzu değerlendireyim. Onaylandığında bilgilendirileceksiniz.")
+
+  // FAQ
+  faqBadge String @default("Sıkça Sorulan Sorular")
+  faqTitle String @default("Aklınıza takılanlar")
+  // JSON: [{ q, a }]
+  faqItems String @default("[]")
+
+  // CTA
+  ctaTitle    String @default("Sağlıklı yaşam için\nbekleyecek vaktiniz yok.")
+  ctaSubtitle String @default("Randevu sürecinizi 60 saniyede tamamlayın. Onayım SMS ile size ulaşacak, sürdürülebilir değişim yolculuğunuz başlayacak.")
+  ctaPrimary  String @default("Randevu Talep Et")
+
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+}
+
 model User {
   id            String    @id @default(cuid())
   email         String    @unique

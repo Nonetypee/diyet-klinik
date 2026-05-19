@@ -82,11 +82,12 @@ async function getActiveServices() {
 }
 
 export default async function HomePage() {
-  const [testimonials, services, { clinic, dietician }] = await Promise.all([
-    getFeaturedTestimonials(),
-    getActiveServices(),
-    getLandingData(),
-  ]);
+  const [testimonials, services, { clinic, dietician, content }] =
+    await Promise.all([
+      getFeaturedTestimonials(),
+      getActiveServices(),
+      getLandingData(),
+    ]);
 
   const servicesForLanding = services.map((s) => ({
     slug: s.slug,
@@ -101,37 +102,49 @@ export default async function HomePage() {
     durationMin: s.durationMin,
   }));
 
+  // Marka renkleri CSS değişkenleri olarak — Tailwind arbitrary-value
+  // (`bg-[var(--brand)]`) ile landing component'lerinde kullanılır.
+  const themeStyle = {
+    "--brand": content.primaryColor,
+    "--brand-dark": content.primaryColorDark,
+    "--brand-accent": content.accentColor,
+    "--brand-bg-dark": content.darkBgColor,
+  } as React.CSSProperties;
+
   return (
-    <main className="min-h-screen bg-white">
+    <main
+      className="min-h-screen bg-white"
+      style={themeStyle}
+      data-theme="landing"
+    >
       <Navbar clinic={clinic} dietician={dietician} />
-      <Hero clinic={clinic} dietician={dietician} />
-      <TrustBuilder dietician={dietician} />
-      <Services items={servicesForLanding} />
+      <Hero clinic={clinic} dietician={dietician} content={content} />
+      <TrustBuilder dietician={dietician} content={content} />
+      <Services items={servicesForLanding} content={content} />
       <AboutDietician dietician={dietician} />
-      <HowItWorks clinic={clinic} />
+      <HowItWorks clinic={clinic} content={content} />
       <section
         id="randevu"
         className="border-y border-slate-100 bg-emerald-50/30 py-24"
       >
         <div className="mx-auto max-w-5xl px-6">
           <div className="mb-12 text-center">
-            <span className="inline-flex items-center rounded-full bg-emerald-50 px-4 py-1.5 text-sm font-medium text-emerald-700 ring-1 ring-emerald-100">
-              Randevu Talebi
+            <span className="inline-flex items-center rounded-full bg-emerald-50 px-4 py-1.5 text-sm font-medium text-[color:var(--brand)] ring-1 ring-emerald-100">
+              {content.bookingBadge}
             </span>
             <h2 className="mt-4 text-balance text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">
-              Sağlıklı yaşam için ilk adımı atın
+              {content.bookingTitle}
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-balance text-lg text-slate-600">
-              Formu doldurun, en kısa sürede randevunuzu değerlendireyim.
-              Onaylandığında bilgilendirileceksiniz.
+              {content.bookingSubtitle}
             </p>
           </div>
           <AppointmentForm services={servicesForForm} />
         </div>
       </section>
       <Testimonials items={testimonials} />
-      <Faq />
-      <Cta clinic={clinic} />
+      <Faq content={content} />
+      <Cta clinic={clinic} content={content} />
       <Footer clinic={clinic} dietician={dietician} />
     </main>
   );

@@ -32,14 +32,20 @@ export function Navbar({ clinic, dietician }: Props) {
     <header className="sticky top-0 z-50 border-b border-slate-100 bg-white/85 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
         <Link href="/" className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-700">
+          <div
+            className="flex h-9 w-9 items-center justify-center rounded-lg"
+            style={{ backgroundColor: "var(--brand)" }}
+          >
             <Leaf className="h-5 w-5 text-white" strokeWidth={2.25} />
           </div>
           <div className="leading-tight">
             <div className="text-base font-semibold tracking-tight text-slate-900">
               {brandTitle}
             </div>
-            <div className="text-[11px] font-medium tracking-wide text-emerald-700">
+            <div
+              className="text-[11px] font-medium tracking-wide"
+              style={{ color: "var(--brand)" }}
+            >
               {brandSubtitle}
             </div>
           </div>
@@ -65,7 +71,12 @@ export function Navbar({ clinic, dietician }: Props) {
             <Phone className="h-4 w-4" />
             {clinic.phone}
           </a>
-          <Button asChild size="sm" variant="primary">
+          <Button
+            asChild
+            size="sm"
+            variant="primary"
+            style={{ backgroundColor: "var(--brand)" }}
+          >
             <Link href={"#randevu" as Route}>Randevu Al</Link>
           </Button>
         </div>
@@ -97,7 +108,12 @@ export function Navbar({ clinic, dietician }: Props) {
               {item.label}
             </Link>
           ))}
-          <Button asChild variant="primary" className="mt-3 w-full">
+          <Button
+            asChild
+            variant="primary"
+            className="mt-3 w-full"
+            style={{ backgroundColor: "var(--brand)" }}
+          >
             <Link href={"#randevu" as Route} onClick={() => setOpen(false)}>
               Randevu Al
             </Link>

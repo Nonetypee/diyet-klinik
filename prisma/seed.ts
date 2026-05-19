@@ -1,6 +1,13 @@
 import { PrismaClient } from "@prisma/client";
 import { hash } from "bcryptjs";
 import { DIETITIAN_SERVICES } from "../lib/services-config";
+import {
+  DEFAULT_FAQ_ITEMS,
+  DEFAULT_HERO_TRUST_SIGNALS,
+  DEFAULT_HOW_STEPS,
+  DEFAULT_TRUST_PILLARS,
+  DEFAULT_TRUST_STATS,
+} from "../lib/landing-defaults";
 
 const prisma = new PrismaClient();
 
@@ -231,6 +238,20 @@ async function main() {
       });
     }
   }
+
+  // 5b. Anasayfa içeriği — singleton
+  await prisma.landingContent.upsert({
+    where: { id: "singleton" },
+    update: {},
+    create: {
+      id: "singleton",
+      heroTrustSignals: JSON.stringify(DEFAULT_HERO_TRUST_SIGNALS),
+      trustPillars: JSON.stringify(DEFAULT_TRUST_PILLARS),
+      trustStats: JSON.stringify(DEFAULT_TRUST_STATS),
+      howSteps: JSON.stringify(DEFAULT_HOW_STEPS),
+      faqItems: JSON.stringify(DEFAULT_FAQ_ITEMS),
+    },
+  });
 
   // 6. Admin kullanıcısı (NextAuth giriş için)
   const adminEmail = process.env.ADMIN_EMAIL ?? "admin@diyetklinik.com";

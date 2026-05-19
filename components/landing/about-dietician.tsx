@@ -63,13 +63,19 @@ export function AboutDietician({ dietician }: Props) {
             <div className="relative">
               <div className="aspect-[4/5] overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-100 via-emerald-50 to-white">
                 <div className="flex h-full w-full flex-col items-center justify-center p-10 text-center">
-                  <div className="flex h-32 w-32 items-center justify-center rounded-full bg-white text-4xl font-semibold tracking-tight text-emerald-800 shadow-sm ring-4 ring-emerald-100/60">
+                  <div
+                    className="flex h-32 w-32 items-center justify-center rounded-full bg-white text-4xl font-semibold tracking-tight shadow-sm ring-4 ring-emerald-100/60"
+                    style={{ color: "var(--brand-dark)" }}
+                  >
                     {initials || "—"}
                   </div>
                   <div className="mt-6 text-2xl font-semibold tracking-tight text-slate-900">
                     {fullName}
                   </div>
-                  <div className="mt-1 text-sm font-medium text-emerald-800">
+                  <div
+                    className="mt-1 text-sm font-medium"
+                    style={{ color: "var(--brand-dark)" }}
+                  >
                     {dietician.specialty}
                   </div>
                 </div>
@@ -79,7 +85,10 @@ export function AboutDietician({ dietician }: Props) {
 
           {/* Sağ — İçerik */}
           <div className="lg:col-span-7">
-            <span className="inline-flex items-center rounded-full bg-emerald-50 px-4 py-1.5 text-sm font-medium text-emerald-700 ring-1 ring-emerald-100">
+            <span
+              className="inline-flex items-center rounded-full bg-emerald-50 px-4 py-1.5 text-sm font-medium ring-1 ring-emerald-100"
+              style={{ color: "var(--brand)" }}
+            >
               Hakkımda
             </span>
             <h2 className="mt-5 text-balance text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">
@@ -100,8 +109,11 @@ export function AboutDietician({ dietician }: Props) {
                   className="rounded-2xl border border-emerald-100 bg-white p-5"
                 >
                   <div className="flex items-center gap-2.5">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50">
-                      <h.icon className="h-4 w-4 text-emerald-700" />
+                    <div
+                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50"
+                      style={{ color: "var(--brand)" }}
+                    >
+                      <h.icon className="h-4 w-4" />
                     </div>
                     <div className="text-sm font-semibold text-slate-900">
                       {h.title}

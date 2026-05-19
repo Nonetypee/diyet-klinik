@@ -28,14 +28,20 @@ export function Footer({ clinic, dietician }: Props) {
           {/* Brand */}
           <div className="lg:col-span-4">
             <Link href="/" className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-700">
+              <div
+                className="flex h-9 w-9 items-center justify-center rounded-lg"
+                style={{ backgroundColor: "var(--brand)" }}
+              >
                 <Leaf className="h-5 w-5 text-white" strokeWidth={2.25} />
               </div>
               <div className="leading-tight">
                 <div className="text-base font-semibold tracking-tight text-slate-900">
                   {brandTitle}
                 </div>
-                <div className="text-[11px] font-medium tracking-wide text-emerald-700">
+                <div
+                  className="text-[11px] font-medium tracking-wide"
+                  style={{ color: "var(--brand)" }}
+                >
                   {tagline}
                 </div>
               </div>
@@ -48,12 +54,18 @@ export function Footer({ clinic, dietician }: Props) {
             <div className="mt-6 space-y-3 text-sm text-slate-600">
               {fullAddress && (
                 <div className="flex items-start gap-2.5">
-                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                  <MapPin
+                    className="mt-0.5 h-4 w-4 shrink-0"
+                    style={{ color: "var(--brand)" }}
+                  />
                   <span>{fullAddress}</span>
                 </div>
               )}
               <div className="flex items-center gap-2.5">
-                <Phone className="h-4 w-4 shrink-0 text-emerald-600" />
+                <Phone
+                  className="h-4 w-4 shrink-0"
+                  style={{ color: "var(--brand)" }}
+                />
                 <a
                   href={`tel:${phoneToTelHref(clinic.phone)}`}
                   className="hover:text-slate-900"
@@ -63,7 +75,10 @@ export function Footer({ clinic, dietician }: Props) {
               </div>
               {clinic.whatsapp && (
                 <div className="flex items-center gap-2.5">
-                  <MessageCircle className="h-4 w-4 shrink-0 text-emerald-600" />
+                  <MessageCircle
+                    className="h-4 w-4 shrink-0"
+                    style={{ color: "var(--brand)" }}
+                  />
                   <a
                     href={`https://wa.me/${phoneToTelHref(clinic.whatsapp).replace(/^\+/, "")}`}
                     target="_blank"
@@ -75,7 +90,10 @@ export function Footer({ clinic, dietician }: Props) {
                 </div>
               )}
               <div className="flex items-center gap-2.5">
-                <Mail className="h-4 w-4 shrink-0 text-emerald-600" />
+                <Mail
+                  className="h-4 w-4 shrink-0"
+                  style={{ color: "var(--brand)" }}
+                />
                 <a
                   href={`mailto:${clinic.email}`}
                   className="hover:text-slate-900"
@@ -84,7 +102,10 @@ export function Footer({ clinic, dietician }: Props) {
                 </a>
               </div>
               <div className="flex items-center gap-2.5">
-                <Clock className="h-4 w-4 shrink-0 text-emerald-600" />
+                <Clock
+                  className="h-4 w-4 shrink-0"
+                  style={{ color: "var(--brand)" }}
+                />
                 <span>{hoursLabel}</span>
               </div>
             </div>
